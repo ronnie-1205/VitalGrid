@@ -13,3 +13,7 @@ vitalgrid.db
 .DS_Store
 
 VitalGrid
+
+Proto-Frontend/node_modules
+
+Proto-Frontend//src
