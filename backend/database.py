@@ -1,9 +1,11 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, JSON
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # 1. Connect to SQLite
 # This creates a file named 'vitalgrid.db' in the current folder.
-SQLALCHEMY_DATABASE_URL = "sqlite:///./vitalgrid.db"
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vitalgrid.db")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
 
 # We use connect_args={"check_same_thread": False} because SQLite strictly 
 # restricts connections, but FastAPI needs to run requests simultaneously.

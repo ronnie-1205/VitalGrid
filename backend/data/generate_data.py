@@ -1,5 +1,6 @@
 import json
 import random
+import os
 
 # 1. EXPANDED MEDICINE CATALOG (15 Medicines)
 medicines = [
@@ -23,7 +24,7 @@ medicines = [
     {"id": "MED_15", "name": "ORS (Oral Rehydration)", "unit": "Sachets"}
 ]
 
-# 2. OUR DEMO FACILITIES (The ones we will click on during the pitch)
+# 2. OUR DEMO FACILITIES
 facilities = [
     {"id": 1, "name": "Udupi District Hub", "type": "Hub", "lat": 13.3408, "lon": 74.7421},
     {"id": 2, "name": "Kundapura Taluk Hospital", "type": "Clinic", "lat": 13.6267, "lon": 74.6933},
@@ -31,13 +32,9 @@ facilities = [
 ]
 
 # 3. PROCEDURAL GENERATION OF 70 MORE CLINICS
-# We will scatter them randomly around the Udupi/Mangalore coordinates.
-# Center of our map approx: Lat 13.2, Lon 74.8
-for i in range(4, 75): # ID from 4 to 74
-    # random.uniform picks a random decimal number between the two limits
+for i in range(4, 75): 
     random_lat = random.uniform(12.8, 13.7) 
     random_lon = random.uniform(74.6, 75.1)
-    
     facilities.append({
         "id": i,
         "name": f"Rural Clinic {i}",
@@ -48,23 +45,18 @@ for i in range(4, 75): # ID from 4 to 74
 
 # 4. GENERATE 90 DAYS OF INVENTORY DATA
 inventory = []
-
 for facility in facilities:
     for med in medicines:
         daily_base_consumption = random.randint(5, 40)
-        current_stock = daily_base_consumption * random.randint(25, 60) # Everyone is generally safe
-        
-        # 90 days of history
+        current_stock = daily_base_consumption * random.randint(25, 60)
         history = [max(1, daily_base_consumption + random.randint(-4, 4)) for _ in range(90)]
 
-        # --- THE DEMO CRISIS (Kundapura runs out of Amoxicillin) ---
         if facility["name"] == "Kundapura Taluk Hospital" and med["name"] == "Amoxicillin (Antibiotic)":
-            current_stock = 40 # Extremely low stock!
-            history[-7:] = [80, 85, 90, 88, 95, 100, 110] # Massive demand spike in the last week
+            current_stock = 40 
+            history[-7:] = [80, 85, 90, 88, 95, 100, 110] 
             
-        # --- THE DEMO SAVIOR (Brahmavar has a massive surplus) ---
         if facility["name"] == "Brahmavar CHC" and med["name"] == "Amoxicillin (Antibiotic)":
-            current_stock = 6000 # Enough to save Kundapura
+            current_stock = 6000 
             history[-7:] = [5, 6, 4, 5, 5, 4, 6] 
 
         inventory.append({
@@ -80,7 +72,9 @@ database_seed = {
     "inventory": inventory
 }
 
-with open('seed_data.json', 'w') as outfile:
+script_dir = os.path.dirname(os.path.abspath(__file__))
+json_path = os.path.join(script_dir, 'seed_data.json')
+with open(json_path, 'w') as outfile:
     json.dump(database_seed, outfile, indent=4)
 
 print(f"✅ Generated {len(facilities)} facilities and {len(inventory)} inventory records!")
