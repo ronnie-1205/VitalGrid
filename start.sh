@@ -10,6 +10,9 @@ trap 'echo -e "\n🛑 Shutting down VitalGrid servers..."; kill $(jobs -p); exit
 echo "🟢 Starting Python FastAPI Backend on Port 8001..."
 cd "$PROJECT_ROOT/backend" && conda run -p "$CONDA_ENV_PATH" uvicorn main:app --reload --port 8001 &
 
+echo "🟢 Waiting 3 seconds for backend to boot..."
+sleep 3
+
 echo "🟢 Starting React Frontend on Port 5173..."
 cd "$PROJECT_ROOT/Proto-Frontend" && npm run dev &
 
