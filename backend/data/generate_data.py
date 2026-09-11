@@ -34,7 +34,10 @@ facilities = [
 # 3. PROCEDURAL GENERATION OF 70 MORE CLINICS
 for i in range(4, 75): 
     random_lat = random.uniform(12.8, 13.7) 
-    random_lon = random.uniform(74.6, 75.1)
+    # The coastline angles northwest. We calculate a safe minimum longitude (inland/east) 
+    # based on the latitude to prevent facilities from spawning in the Arabian Sea.
+    min_lon = 74.85 - (random_lat - 12.8) * 0.277
+    random_lon = random.uniform(min_lon + 0.02, 75.1)
     facilities.append({
         "id": i,
         "name": f"Rural Clinic {i}",
