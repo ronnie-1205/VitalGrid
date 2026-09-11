@@ -1,4 +1,5 @@
-import { apiFetch, USE_MOCKS, mockDelay } from './client'
+with open("Proto-Frontend/src/api/hospitals.js", "w") as f:
+    f.write("""import { apiFetch, USE_MOCKS, mockDelay } from './client'
 import { MOCK_HOSPITALS, MOCK_ALERTS } from '../data/mockData'
 
 export async function fetchHospitals() {
@@ -130,3 +131,4 @@ export async function fetchNearbyDonors(hospitalId, item = 'oxygen') {
     surplus: Math.round(d.surplus_days * 10)
   }))
 }
+""")
