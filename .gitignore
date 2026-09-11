@@ -1,0 +1,15 @@
+# Ignore the Python Cache
+__pycache__/
+*.pyc
+
+# Ignore the Database (Everyone generates their own locally)
+*.db
+vitalgrid.db
+
+# Ignore VS Code workspace settings
+.vscode/
+
+# Ignore Mac OS hidden files (if your teammates use Mac)
+.DS_Store
+
+VitalGrid
