@@ -243,21 +243,43 @@ class SimulateRequest(BaseModel):
 
 @app.post("/api/simulate")
 def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
-    # Linear projection for now
     facilities = db.query(Facility).all()
+    medicines = db.query(Medicine).all()
+    inventories = db.query(Inventory).all()
+    
+    # 1. Precompute Distance Matrix (Haversine)
+    dist_matrix = {}
+    for f1 in facilities:
+        distances = []
+        for f2 in facilities:
+            if f1.id != f2.id:
+                d = haversine(f1.lat, f1.lon, f2.lat, f2.lon)
+                distances.append((d, f2.id))
+        distances.sort(key=lambda x: x[0])
+        dist_matrix[f1.id] = [fid for d, fid in distances]
+
+    # 2. Initialize Simulation State
+    state = {f.id: {} for f in facilities}
+    pending_orders = {f.id: {} for f in facilities} # Track deliveries: pending_orders[fac_id][med_id] = delivery_day
+    
+    for inv in inventories:
+        demand = calculate_wma(inv.consumption_history)
+        state[inv.facility_id][inv.medicine_id] = {
+            "stock": float(inv.current_stock),
+            "base_demand": float(demand)
+        }
+        
     timeline = []
     
-    for day in range(req.days + 1):
+    def get_day_snapshot():
         day_hospitals = []
         for fac in facilities:
-            inventories = db.query(Inventory).filter(Inventory.facility_id == fac.id).all()
             lowest_dus = 999
-            
-            for inv in inventories:
-                demand = calculate_wma(inv.consumption_history)
-                # Projected stock = current - (demand * day)
-                projected_stock = max(0, inv.current_stock - (demand * day))
-                dus = projected_stock / demand
+            for med in medicines:
+                s = state[fac.id].get(med.id)
+                if not s: continue
+                # DUS based on normal base demand
+                dus = s["stock"] / max(0.1, s["base_demand"])
                 if dus < lowest_dus:
                     lowest_dus = dus
                     
@@ -273,9 +295,67 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                 "lat": fac.lat,
                 "lng": fac.lon,
                 "status": status,
-                "daysOfOxygenLeft": max(0, round(lowest_dus)) # Frontend expects this key
+                "daysOfOxygenLeft": max(0, round(lowest_dus)) # Frontend compatibility
             })
+        return day_hospitals
+
+    # Day 0: Current State
+    timeline.append({"day": 0, "hospitals": get_day_snapshot()})
+    
+    # 3. Run the Cascade Simulation Iteratively
+    for day in range(1, req.days + 1):
+        
+        # A. Process Traditional Supply Chain Deliveries
+        for f_id in state:
+            for m_id in list(pending_orders[f_id].keys()):
+                if pending_orders[f_id][m_id] == day:
+                    # Delivery arrives! Restock 30 days worth of base demand
+                    state[f_id][m_id]["stock"] += (state[f_id][m_id]["base_demand"] * 30)
+                    del pending_orders[f_id][m_id]
+
+        # B. Resolve Patient Demand & Spillover
+        for med in medicines:
+            # Setup active demand for today across all facilities
+            active_demand = {f.id: state[f.id][med.id]["base_demand"] for f in facilities if med.id in state[f.id]}
+            queue = list(active_demand.keys())
             
-        timeline.append({"day": day, "hospitals": day_hospitals})
+            while queue:
+                f_id = queue.pop(0)
+                demand_needed = active_demand[f_id]
+                if demand_needed <= 0:
+                    continue
+                    
+                stock_available = state[f_id][med.id]["stock"]
+                
+                if stock_available >= demand_needed:
+                    # Hospital successfully handled the patient load
+                    state[f_id][med.id]["stock"] -= demand_needed
+                    active_demand[f_id] = 0
+                else:
+                    # Stockout! Consume what's left, patients spill over to nearest hospital
+                    state[f_id][med.id]["stock"] = 0
+                    spillover = demand_needed - stock_available
+                    active_demand[f_id] = 0
+                    
+                    # Route spillover to the closest facility that still has stock
+                    for nearest_id in dist_matrix[f_id]:
+                        if nearest_id in state and med.id in state[nearest_id]:
+                            if state[nearest_id][med.id]["stock"] > 0:
+                                active_demand[nearest_id] += spillover
+                                if nearest_id not in queue:
+                                    queue.append(nearest_id)
+                                break
+            
+            # C. Trigger Traditional Restock Orders
+            # If stock falls to a warning level (7 days), the hospital orders via standard supply chain.
+            # Traditional logistics takes 5 days (significantly slower than immediate peer-to-peer sharing).
+            for f_id in state:
+                if med.id in state[f_id]:
+                    dus = state[f_id][med.id]["stock"] / max(0.1, state[f_id][med.id]["base_demand"])
+                    if dus <= 7.0 and med.id not in pending_orders[f_id]:
+                        pending_orders[f_id][med.id] = day + 5
+                        
+        # Record the grid state at the end of the day
+        timeline.append({"day": day, "hospitals": get_day_snapshot()})
         
     return {"days": timeline}
