@@ -69,7 +69,14 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
       <div className="flex items-center justify-between border-b border-edge px-4 py-3">
         <div>
           <p className="text-xs font-mono" style={{ color: s.color }}>{s.label.toUpperCase()}</p>
-          <h2 className="text-base font-semibold text-ink">{hospital.name}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-ink">{hospital.name}</h2>
+            {hospital.type && (
+              <span className="inline-flex items-center rounded border border-edge bg-bg px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-mute shadow-sm">
+                {hospital.type}
+              </span>
+            )}
+          </div>
           <div className="mt-2">
             <StockoutBadge days={days} />
           </div>

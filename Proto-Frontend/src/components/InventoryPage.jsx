@@ -17,8 +17,15 @@ export default function InventoryPage({ hospital, onClose }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-edge bg-bg px-6 py-4">
         <div>
-          <h2 className="text-xl font-bold text-ink">{hospital.name} - Full Inventory</h2>
-          <p className="text-sm text-mute">Comprehensive real-time stock levels and burn rates.</p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-ink">{hospital.name} - Full Inventory</h2>
+            {hospital.type && (
+              <span className="inline-flex items-center rounded border border-edge bg-surface px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-mute shadow-sm">
+                {hospital.type}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-mute">Comprehensive real-time stock levels and burn rates.</p>
         </div>
         <button
           onClick={onClose}

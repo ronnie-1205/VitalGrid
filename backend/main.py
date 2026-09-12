@@ -104,6 +104,7 @@ def get_network_status(db: Session = Depends(get_db)):
         network_data.append({
             "id": fac.id,
             "name": fac.name,
+            "type": fac.type,
             "lat": fac.lat,
             "lon": fac.lon,
             "status": status,

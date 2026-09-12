@@ -10,6 +10,7 @@ export async function fetchHospitals() {
   return data.nodes.map(node => ({
     id: node.id,
     name: node.name,
+    type: node.type,
     lat: node.lat,
     lng: node.lon,
     status: node.status,
