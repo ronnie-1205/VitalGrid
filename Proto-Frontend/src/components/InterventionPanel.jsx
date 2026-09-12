@@ -46,6 +46,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
   if (!hospital) return null
   const s = statusOf(hospital.status)
   const days = daysUntilStockout(hospital)
+  const isStable = hospital.status === 'safe' || hospital.status === 'healthy'
 
   async function handleApply() {
     if (!recommendation?.action) return
@@ -105,52 +106,56 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
           </button>
         </section>
 
-        <section>
-          <h3 className="mb-2 text-xs font-medium text-mute">Why it&rsquo;s flagged</h3>
-          {loading ? (
-            <p className="text-sm text-mute">Evaluating supply position…</p>
-          ) : (
-            <p className="text-sm leading-relaxed text-ink">{recommendation?.summary}</p>
-          )}
-        </section>
-
-        <section>
-          <h3 className="mb-2 text-xs font-medium text-mute">Recommended action</h3>
-          {loading && <p className="text-sm text-mute">Building recommendation…</p>}
-
-          {!loading && recommendation?.action && (
-            <div className="rounded-lg border border-edge bg-bg p-3">
-              <p className="text-sm text-ink">
-                Transfer <span className="font-mono text-action">{recommendation.action.units}</span> units of{' '}
-                <span className="font-medium">{recommendation.action.item}</span> from{' '}
-                <span className="font-medium">{recommendation.action.fromHospitalName}</span>{' '}
-                <span className="text-mute">({recommendation.action.distanceKm}km away)</span>
-              </p>
-
-              <button
-                onClick={handleApply}
-                disabled={applying || applied}
-                className="mt-3 w-full rounded-md bg-action px-3 py-2 text-sm font-medium text-bg transition-opacity disabled:opacity-60"
-              >
-                {applied ? 'Intervention applied' : applying ? 'Applying…' : 'Apply intervention'}
-              </button>
-
-              {applied && (
-                <p className="mt-2 text-xs text-mute">
-                  Recorded locally — connect the backend to persist this transfer.
-                </p>
+        {!isStable && (
+          <>
+            <section>
+              <h3 className="mb-2 text-xs font-medium text-mute">Why it&rsquo;s flagged</h3>
+              {loading ? (
+                <p className="text-sm text-mute">Evaluating supply position…</p>
+              ) : (
+                <p className="text-sm leading-relaxed text-ink">{recommendation?.summary}</p>
               )}
-            </div>
-          )}
+            </section>
 
-          {!loading && !recommendation?.action && (
-            <p className="text-sm text-mute">No viable donor facility found nearby.</p>
-          )}
-        </section>
+            <section>
+              <h3 className="mb-2 text-xs font-medium text-mute">Recommended action</h3>
+              {loading && <p className="text-sm text-mute">Building recommendation…</p>}
 
-        <section>
-          <NearbyDonorsList hospitalId={hospital.id} item={hospital.criticalItem || 'oxygen'} />
-        </section>
+              {!loading && recommendation?.action && (
+                <div className="rounded-lg border border-edge bg-bg p-3">
+                  <p className="text-sm text-ink">
+                    Transfer <span className="font-mono text-action">{recommendation.action.units}</span> units of{' '}
+                    <span className="font-medium">{recommendation.action.item}</span> from{' '}
+                    <span className="font-medium">{recommendation.action.fromHospitalName}</span>{' '}
+                    <span className="text-mute">({recommendation.action.distanceKm}km away)</span>
+                  </p>
+
+                  <button
+                    onClick={handleApply}
+                    disabled={applying || applied}
+                    className="mt-3 w-full rounded-md bg-action px-3 py-2 text-sm font-medium text-bg transition-opacity disabled:opacity-60"
+                  >
+                    {applied ? 'Intervention applied' : applying ? 'Applying…' : 'Apply intervention'}
+                  </button>
+
+                  {applied && (
+                    <p className="mt-2 text-xs text-mute">
+                      Recorded locally — connect the backend to persist this transfer.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!loading && !recommendation?.action && (
+                <p className="text-sm text-mute">No viable donor facility found nearby.</p>
+              )}
+            </section>
+
+            <section>
+              <NearbyDonorsList hospitalId={hospital.id} item={hospital.criticalItem || 'oxygen'} />
+            </section>
+          </>
+        )}
       </div>
     </div>
   )
