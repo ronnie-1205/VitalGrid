@@ -72,6 +72,7 @@ def get_network_status(db: Session = Depends(get_db)):
         
         lowest_dus = 999
         critical_medicine = None
+        full_inventory = {}
         
         for inv in inventories:
             # 1. Forecast tomorrow's demand
@@ -80,11 +81,16 @@ def get_network_status(db: Session = Depends(get_db)):
             # 2. Predict Days Until Stockout (DUS)
             dus = inv.current_stock / forecasted_daily_demand
             
+            med = db.query(Medicine).filter(Medicine.id == inv.medicine_id).first()
+            full_inventory[med.name] = {
+                "days": round(dus, 1),
+                "stock": inv.current_stock,
+                "unit": med.unit
+            }
+            
             # We want to find the medicine in the WORST condition at this hospital
             if dus < lowest_dus:
                 lowest_dus = dus
-                # Find the medicine name from the database
-                med = db.query(Medicine).filter(Medicine.id == inv.medicine_id).first()
                 critical_medicine = med.name
 
         # 3. Determine the Color/Risk for the React Map
@@ -102,7 +108,8 @@ def get_network_status(db: Session = Depends(get_db)):
             "lon": fac.lon,
             "status": status,
             "lowest_days_remaining": round(lowest_dus, 1),
-            "critical_medicine": critical_medicine
+            "critical_medicine": critical_medicine,
+            "full_inventory": full_inventory
         })
 
     return {"nodes": network_data}

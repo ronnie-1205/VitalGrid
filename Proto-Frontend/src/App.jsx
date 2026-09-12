@@ -4,6 +4,7 @@ import CommandMap from './components/CommandMap';
 import AlertSidebar from './components/AlertSidebar';
 import InterventionPanel from './components/InterventionPanel';
 import CascadeSimulator from './components/CascadeSimulator';
+import InventoryPage from './components/InventoryPage';
 import { fetchHospitals, fetchAlerts } from './api/hospitals';
 import Login from './components/Login';
 
@@ -79,6 +80,7 @@ export default function App() {
               <InterventionPanel
                 hospital={selectedHospital}
                 onClose={() => setSelectedId(null)}
+                onViewInventory={() => setScreen('inventory')}
               />
             )}
           </div>
@@ -92,6 +94,7 @@ export default function App() {
       )}
 
       {screen === 'simulator' && <CascadeSimulator />}
+      {screen === 'inventory' && <InventoryPage hospital={selectedHospital} onClose={() => setScreen('command')} />}
     </div>
   );
 }

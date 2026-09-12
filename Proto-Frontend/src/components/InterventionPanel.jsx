@@ -4,8 +4,9 @@ import { statusOf } from '../utils/status'
 import NearbyDonorsList from './nearbydonors'
 
 function daysUntilStockout(hospital) {
+  if (hospital.daysRemaining !== undefined) return Math.floor(hospital.daysRemaining)
   if (!hospital?.burnRate || hospital.burnRate <= 0) return null
-  return Math.floor(hospital.stock.oxygen / hospital.burnRate)
+  return Math.floor((hospital.stock.oxygen || 0) / hospital.burnRate)
 }
 
 function StockoutBadge({ days }) {
@@ -27,7 +28,7 @@ function StockoutBadge({ days }) {
   )
 }
 
-export default function InterventionPanel({ hospital, onClose, onApplied }) {
+export default function InterventionPanel({ hospital, onClose, onApplied, onViewInventory }) {
   const [recommendation, setRecommendation] = useState(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
@@ -58,6 +59,10 @@ export default function InterventionPanel({ hospital, onClose, onApplied }) {
     }
   }
 
+  const criticalItems = hospital.fullInventory 
+    ? Object.entries(hospital.fullInventory).filter(([_, data]) => data.days < 5)
+    : [];
+
   return (
     <div className="absolute inset-y-0 right-0 z-[1000] flex w-96 flex-col border-l border-edge bg-surface shadow-panel">
       <div className="flex items-center justify-between border-b border-edge px-4 py-3">
@@ -79,15 +84,25 @@ export default function InterventionPanel({ hospital, onClose, onApplied }) {
 
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
         <section>
-          <h3 className="mb-2 text-xs font-medium text-mute">Current stock</h3>
-          <dl className="grid grid-cols-3 gap-2 font-mono text-sm">
-            {Object.entries(hospital.stock).map(([item, qty]) => (
-              <div key={item} className="rounded-md border border-edge bg-bg px-2 py-2">
-                <dt className="text-[10px] capitalize text-mute">{item.replace('_', ' ')}</dt>
-                <dd className="text-ink">{qty}</dd>
-              </div>
-            ))}
+          <h3 className="mb-2 text-xs font-medium text-mute">Critical Supplies (&lt; 5 Days)</h3>
+          <dl className="grid grid-cols-2 gap-2 font-mono text-sm">
+            {criticalItems.length > 0 ? (
+              criticalItems.map(([item, data]) => (
+                <div key={item} className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-2">
+                  <dt className="text-[10px] capitalize text-mute">{item}</dt>
+                  <dd className="text-red-400 font-semibold">{data.days} Days left</dd>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-2 text-xs text-mute py-1">No supplies under 5 days.</div>
+            )}
           </dl>
+          <button
+            onClick={onViewInventory}
+            className="mt-3 w-full rounded-md border border-edge bg-bg px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-raised"
+          >
+            View Full Inventory
+          </button>
         </section>
 
         <section>
@@ -134,7 +149,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied }) {
         </section>
 
         <section>
-          <NearbyDonorsList hospitalId={hospital.id} item="oxygen" />
+          <NearbyDonorsList hospitalId={hospital.id} item={hospital.criticalItem || 'oxygen'} />
         </section>
       </div>
     </div>

@@ -13,9 +13,11 @@ export async function fetchHospitals() {
     lat: node.lat,
     lng: node.lon,
     status: node.status,
+    criticalItem: node.critical_medicine || 'Supply',
+    daysRemaining: node.lowest_days_remaining,
+    fullInventory: node.full_inventory || {},
     stock: { 
-      [node.critical_medicine || 'Supply']: Math.round(node.lowest_days_remaining * 10),
-      oxygen: Math.round(node.lowest_days_remaining * 10) 
+      [node.critical_medicine || 'Supply']: Math.round(node.lowest_days_remaining * 10)
     },
     burnRate: 10
   }))

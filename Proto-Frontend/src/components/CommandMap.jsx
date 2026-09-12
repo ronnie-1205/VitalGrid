@@ -9,13 +9,15 @@ export default function CommandMap({ hospitals, selectedId, onSelect }) {
       center={CENTER}
       zoom={10}
       zoomControl={true}
+      attributionControl={false}
       className="h-full w-full"
       style={{ background: '#0B0F14' }}
     >
       <TileLayer
         // Dark basemap so the status dots stay the loudest thing on screen.
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; OpenStreetMap &copy; CARTO'
+        url={`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${import.meta.env.VITE_CARTO_API_KEY ? '?key=' + import.meta.env.VITE_CARTO_API_KEY : ''}`}
+        subdomains="abcd"
+        maxZoom={20}
       />
 
       {hospitals.map((h) => {
