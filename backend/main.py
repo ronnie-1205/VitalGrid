@@ -140,6 +140,8 @@ def get_redistribution_plan(facility_id: int, db: Session = Depends(get_db)):
             worst_inv = inv
             
     med_needed = db.query(Medicine).filter(Medicine.id == worst_inv.medicine_id).first()
+    dying_demand = calculate_wma(worst_inv.consumption_history)
+    requested_transfer_units = math.floor(dying_demand * 14) # Give the dying hospital a 14-day supply
 
     # 2. Search the Mesh Network for a Donor
     all_other_inventories = db.query(Inventory).filter(
@@ -149,11 +151,15 @@ def get_redistribution_plan(facility_id: int, db: Session = Depends(get_db)):
 
     donors = []
     for inv in all_other_inventories:
-        demand = calculate_wma(inv.consumption_history)
-        dus = inv.current_stock / demand
+        donor_demand = calculate_wma(inv.consumption_history)
+        dus = inv.current_stock / donor_demand
         
-        # Rule: We ONLY take medicine from a hospital if they have > 30 days of safety stock
-        if dus > 30:
+        # Calculate how many units the donor can safely give away without dropping below 30 days of stock
+        safe_to_give = inv.current_stock - (donor_demand * 30)
+        
+        # Rule: We ONLY take medicine from a hospital if they can fulfill the entire request
+        # and STILL have > 30 days of safety stock left for themselves.
+        if safe_to_give >= requested_transfer_units:
             donor_fac = db.query(Facility).filter(Facility.id == inv.facility_id).first()
             # Calculate distance using our Haversine math
             dist = haversine(dying_fac.lat, dying_fac.lon, donor_fac.lat, donor_fac.lon)
@@ -163,7 +169,7 @@ def get_redistribution_plan(facility_id: int, db: Session = Depends(get_db)):
                 "donor_name": donor_fac.name,
                 "distance_km": round(dist, 1),
                 "surplus_days": round(dus, 1),
-                "recommended_transfer_units": math.floor(demand * 14) # Give the dying hospital a 14-day supply
+                "recommended_transfer_units": requested_transfer_units
             })
 
     # Sort the donors by who is closest (distance)

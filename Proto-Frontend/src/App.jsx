@@ -31,13 +31,16 @@ export default function App() {
   };
 
   // Fetch hospital data
-  useEffect(() => {
-    Promise.all([fetchHospitals(), fetchAlerts()])
+  const refreshNetworkData = () => {
+    return Promise.all([fetchHospitals(), fetchAlerts()])
       .then(([h, a]) => {
         setHospitals(h);
         setAlerts(a);
-      })
-      .finally(() => setLoading(false));
+      });
+  };
+
+  useEffect(() => {
+    refreshNetworkData().finally(() => setLoading(false));
   }, []);
 
   const selectedHospital =
@@ -81,6 +84,7 @@ export default function App() {
                 hospital={selectedHospital}
                 onClose={() => setSelectedId(null)}
                 onViewInventory={() => setScreen('inventory')}
+                onApplied={refreshNetworkData}
               />
             )}
           </div>

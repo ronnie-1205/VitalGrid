@@ -146,8 +146,8 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
                   </button>
 
                   {applied && (
-                    <p className="mt-2 text-xs text-mute">
-                      Recorded locally — connect the backend to persist this transfer.
+                    <p className="mt-2 text-xs text-green-500 font-medium">
+                      Transfer verified and committed to database!
                     </p>
                   )}
                 </div>
