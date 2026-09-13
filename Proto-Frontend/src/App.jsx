@@ -17,6 +17,7 @@ export default function App() {
   const [hospitals, setHospitals] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [activeDonorId, setActiveDonorId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Login
@@ -75,6 +76,7 @@ export default function App() {
               <CommandMap
                 hospitals={hospitals}
                 selectedId={selectedId}
+                activeDonorId={activeDonorId}
                 onSelect={setSelectedId}
               />
             )}
@@ -82,9 +84,13 @@ export default function App() {
             {selectedHospital && (
               <InterventionPanel
                 hospital={selectedHospital}
-                onClose={() => setSelectedId(null)}
+                onClose={() => {
+                  setSelectedId(null)
+                  setActiveDonorId(null)
+                }}
                 onViewInventory={() => setScreen('inventory')}
                 onApplied={refreshNetworkData}
+                onDonorChange={setActiveDonorId}
               />
             )}
           </div>

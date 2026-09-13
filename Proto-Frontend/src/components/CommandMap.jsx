@@ -1,10 +1,13 @@
 import React from 'react'
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Tooltip, Polyline } from 'react-leaflet'
 import { statusOf } from '../utils/status'
 
 const CENTER = [13.42, 74.85]
 
-export default function CommandMap({ hospitals, selectedId, onSelect }) {
+export default function CommandMap({ hospitals, selectedId, activeDonorId, onSelect }) {
+  const selectedHospital = hospitals.find(h => h.id === selectedId)
+  const activeDonor = hospitals.find(h => h.id === activeDonorId)
+
   return (
     <MapContainer
       center={CENTER}
@@ -21,20 +24,37 @@ export default function CommandMap({ hospitals, selectedId, onSelect }) {
         maxZoom={20}
       />
 
+      {selectedHospital && activeDonor && (
+        <Polyline 
+          positions={[
+            [activeDonor.lat, activeDonor.lng],
+            [selectedHospital.lat, selectedHospital.lng]
+          ]}
+          pathOptions={{
+            color: '#3b82f6', // Tailwind blue-500
+            weight: 4,
+            className: 'flow-line'
+          }}
+        />
+      )}
+
       {hospitals.map((h) => {
         const s = statusOf(h.status)
         const isSelected = h.id === selectedId
+        const isActiveDonor = h.id === activeDonorId
+        const isHighlighted = isSelected || isActiveDonor
+        
         return (
           <React.Fragment key={h.id}>
-            {/* The white spotlight / halo effect behind the selected node */}
-            {isSelected && (
+            {/* The white spotlight / halo effect behind the highlighted nodes */}
+            {isHighlighted && (
               <CircleMarker
                 center={[h.lat, h.lng]}
                 radius={22}
                 pathOptions={{
                   stroke: false,
-                  fillColor: '#ffffff',
-                  fillOpacity: 0.2,
+                  fillColor: isActiveDonor ? '#3b82f6' : '#ffffff',
+                  fillOpacity: isActiveDonor ? 0.3 : 0.2,
                   className: 'animate-pulse'
                 }}
               />
@@ -43,12 +63,12 @@ export default function CommandMap({ hospitals, selectedId, onSelect }) {
             {/* The primary hospital node */}
             <CircleMarker
               center={[h.lat, h.lng]}
-              radius={isSelected ? 11 : 8}
+              radius={isHighlighted ? 11 : 8}
               pathOptions={{
-                color: isSelected ? '#ffffff' : s.color,
-                fillColor: s.color,
-                fillOpacity: h.status === 'critical' ? 0.9 : 0.75,
-                weight: isSelected ? 3 : 1.5,
+                color: isHighlighted ? '#ffffff' : s.color,
+                fillColor: isActiveDonor ? '#3b82f6' : s.color,
+                fillOpacity: (h.status === 'critical' || isActiveDonor) ? 0.9 : 0.75,
+                weight: isHighlighted ? 3 : 1.5,
               }}
               eventHandlers={{ click: () => onSelect(h.id) }}
             >

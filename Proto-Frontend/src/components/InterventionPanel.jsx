@@ -27,7 +27,7 @@ function StockoutBadge({ days }) {
   )
 }
 
-export default function InterventionPanel({ hospital, onClose, onApplied, onViewInventory }) {
+export default function InterventionPanel({ hospital, onClose, onApplied, onViewInventory, onDonorChange }) {
   const [recommendation, setRecommendation] = useState(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
@@ -45,6 +45,12 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
       })
       .finally(() => setLoading(false))
   }, [hospital?.id])
+
+  useEffect(() => {
+    if (onDonorChange) {
+      onDonorChange(selectedDonorId)
+    }
+  }, [selectedDonorId, onDonorChange])
 
   const currentAction = recommendation?.alternatives?.find(d => d.donor_id === selectedDonorId) 
     ? {
