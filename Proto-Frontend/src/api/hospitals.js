@@ -37,27 +37,36 @@ export async function fetchRecommendation(hospitalId) {
     await mockDelay(400)
     const { MOCK_HOSPITALS: hospitals } = await import('../data/mockData')
     const target = hospitals.find((h) => h.id === hospitalId)
-    const donor = hospitals
+    const donors = hospitals
       .filter((h) => h.id !== hospitalId && h.status === 'healthy')
-      .sort((a, b) => b.stock.oxygen - a.stock.oxygen)[0]
+      .sort((a, b) => haversineKm(target, a) - haversineKm(target, b))
+      .slice(0, 3)
 
-    if (!target || !donor) {
+    if (!target || donors.length === 0) {
       return { summary: 'No viable donor hospital found nearby.', action: null }
     }
 
-    const distanceKm = Math.round(haversineKm(target, donor))
-    const units = Math.round(donor.stock.oxygen * 0.3)
+    const bestDonor = donors[0]
+    const distanceKm = Math.round(haversineKm(target, bestDonor))
+    const units = Math.round(bestDonor.stock.oxygen * 0.3)
 
     return {
-      summary: `${target.name} is running out of oxygen. ${donor.name} has surplus capacity ${distanceKm}km away.`,
+      summary: `${target.name} is running out of oxygen. ${bestDonor.name} has surplus capacity ${distanceKm}km away.`,
       action: {
         type: 'transfer',
-        fromHospitalId: donor.id,
-        fromHospitalName: donor.name,
+        fromHospitalId: bestDonor.id,
+        fromHospitalName: bestDonor.name,
         item: 'oxygen',
         units,
         distanceKm,
       },
+      alternatives: donors.map(d => ({
+        donor_id: d.id,
+        donor_name: d.name,
+        distance_km: Math.round(haversineKm(target, d)),
+        surplus_days: Math.round(d.stock.oxygen / 10),
+        recommended_transfer_units: units
+      }))
     }
   }
   
@@ -76,7 +85,8 @@ export async function fetchRecommendation(hospitalId) {
       item: data.medicine_needed,
       units: best.recommended_transfer_units,
       distanceKm: best.distance_km
-    }
+    },
+    alternatives: data.best_interventions
   }
 }
 

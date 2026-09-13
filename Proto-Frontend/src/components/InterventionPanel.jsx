@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchRecommendation, applyIntervention } from '../api/hospitals'
 import { statusOf } from '../utils/status'
-import NearbyDonorsList from './nearbydonors'
 
 function daysUntilStockout(hospital) {
   if (hospital.daysRemaining !== undefined) return Math.floor(hospital.daysRemaining)
@@ -33,15 +32,29 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [selectedDonorId, setSelectedDonorId] = useState(null)
 
   useEffect(() => {
     if (!hospital) return
     setLoading(true)
     setApplied(false)
     fetchRecommendation(hospital.id)
-      .then(setRecommendation)
+      .then((res) => {
+        setRecommendation(res)
+        if (res?.action) setSelectedDonorId(res.action.fromHospitalId)
+      })
       .finally(() => setLoading(false))
   }, [hospital?.id])
+
+  const currentAction = recommendation?.alternatives?.find(d => d.donor_id === selectedDonorId) 
+    ? {
+        item: recommendation.action.item,
+        units: recommendation.alternatives.find(d => d.donor_id === selectedDonorId).recommended_transfer_units,
+        fromHospitalId: selectedDonorId,
+        fromHospitalName: recommendation.alternatives.find(d => d.donor_id === selectedDonorId).donor_name,
+        distanceKm: recommendation.alternatives.find(d => d.donor_id === selectedDonorId).distance_km
+      }
+    : recommendation?.action
 
   if (!hospital) return null
   const s = statusOf(hospital.status)
@@ -49,12 +62,12 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
   const isStable = hospital.status === 'safe' || hospital.status === 'healthy'
 
   async function handleApply() {
-    if (!recommendation?.action) return
+    if (!currentAction) return
     setApplying(true)
     try {
-      await applyIntervention(hospital.id, recommendation.action)
+      await applyIntervention(hospital.id, currentAction)
       setApplied(true)
-      onApplied?.(hospital.id, recommendation.action)
+      onApplied?.(hospital.id, currentAction)
     } finally {
       setApplying(false)
     }
@@ -128,13 +141,13 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
               <h3 className="mb-2 text-xs font-medium text-mute">Recommended action</h3>
               {loading && <p className="text-sm text-mute">Building recommendation…</p>}
 
-              {!loading && recommendation?.action && (
+              {!loading && currentAction && (
                 <div className="rounded-lg border border-edge bg-bg p-3">
                   <p className="text-sm text-ink">
-                    Transfer <span className="font-mono text-action">{recommendation.action.units}</span> units of{' '}
-                    <span className="font-medium">{recommendation.action.item}</span> from{' '}
-                    <span className="font-medium">{recommendation.action.fromHospitalName}</span>{' '}
-                    <span className="text-mute">({recommendation.action.distanceKm}km away)</span>
+                    Transfer <span className="font-mono text-action">{currentAction.units}</span> units of{' '}
+                    <span className="font-medium">{currentAction.item}</span> from{' '}
+                    <span className="font-medium">{currentAction.fromHospitalName}</span>{' '}
+                    <span className="text-mute">({currentAction.distanceKm}km away)</span>
                   </p>
 
                   <button
@@ -153,14 +166,36 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
                 </div>
               )}
 
-              {!loading && !recommendation?.action && (
+              {!loading && !currentAction && (
                 <p className="text-sm text-mute">No viable donor facility found nearby.</p>
               )}
             </section>
 
-            <section>
-              <NearbyDonorsList hospitalId={hospital.id} item={hospital.criticalItem || 'oxygen'} />
-            </section>
+            {!loading && recommendation?.alternatives?.length > 0 && (
+              <section>
+                <h3 className="mb-2 text-xs font-medium text-mute">
+                  Alternative nearby donors
+                </h3>
+                <ul className="space-y-1.5">
+                  {recommendation.alternatives.map((donor) => (
+                    <li
+                      key={donor.donor_id}
+                      onClick={() => !applied && setSelectedDonorId(donor.donor_id)}
+                      className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+                        selectedDonorId === donor.donor_id
+                          ? 'border-action bg-action/10'
+                          : 'border-edge bg-bg hover:bg-surface'
+                      } ${applied ? 'opacity-60 cursor-default' : ''}`}
+                    >
+                      <span className="text-ink font-medium">{donor.donor_name}</span>
+                      <span className="font-mono text-xs text-mute">
+                        {donor.distance_km}km · surplus {donor.surplus_days}d
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </>
         )}
       </div>

@@ -268,13 +268,32 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
     state = {f.id: {} for f in facilities}
     pending_orders = {f.id: {} for f in facilities} # Track deliveries: pending_orders[fac_id][med_id] = delivery_day
     
+    # NEW: Detect regional shortages. If any hospital is in a crisis for a medicine, 
+    # the traditional supply chain for that medicine is considered overwhelmed/broken region-wide.
+    regional_shortages = set()
     for inv in inventories:
         demand = calculate_wma(inv.consumption_history)
+        if (inv.current_stock / max(0.1, demand)) <= 7.0:
+            regional_shortages.add(inv.medicine_id)
+            
+    for inv in inventories:
+        demand = calculate_wma(inv.consumption_history)
+        stock = float(inv.current_stock)
+        base_demand = float(demand)
         state[inv.facility_id][inv.medicine_id] = {
-            "stock": float(inv.current_stock),
-            "base_demand": float(demand)
+            "stock": stock,
+            "base_demand": base_demand
         }
         
+        # Seed in-transit orders for Day 0
+        dus = stock / max(0.1, base_demand)
+        # If stock is healthy and there's no regional shortage, the truck is already on the way!
+        if 7.0 < dus <= 21.0 and inv.medicine_id not in regional_shortages:
+            days_since_reorder = 21.0 - dus
+            days_until_arrival = 5.0 - days_since_reorder
+            delivery_day = max(1, int(math.ceil(days_until_arrival)))
+            pending_orders[inv.facility_id][inv.medicine_id] = delivery_day
+            
     timeline = []
     
     def get_day_snapshot():
@@ -353,13 +372,14 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                                 break
             
             # C. Trigger Traditional Restock Orders
-            # If stock falls to a warning level (7 days), the hospital orders via standard supply chain.
+            # Hospitals order via standard supply chain at the 21-day Safety Stock mark.
             # Traditional logistics takes 5 days (significantly slower than immediate peer-to-peer sharing).
-            for f_id in state:
-                if med.id in state[f_id]:
-                    dus = state[f_id][med.id]["stock"] / max(0.1, state[f_id][med.id]["base_demand"])
-                    if dus <= 7.0 and med.id not in pending_orders[f_id]:
-                        pending_orders[f_id][med.id] = day + 5
+            if med.id not in regional_shortages:
+                for f_id in state:
+                    if med.id in state[f_id]:
+                        dus = state[f_id][med.id]["stock"] / max(0.1, state[f_id][med.id]["base_demand"])
+                        if dus <= 21.0 and med.id not in pending_orders[f_id]:
+                            pending_orders[f_id][med.id] = day + 5
                         
         # Record the grid state at the end of the day
         timeline.append({"day": day, "hospitals": get_day_snapshot()})
