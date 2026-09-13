@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from database import SessionLocal, Facility, Medicine, Inventory
 import math
+import random
 
 # Initialize the API
 app = FastAPI(title="VitalGrid Command Center API")
@@ -262,37 +263,54 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                 d = haversine(f1.lat, f1.lon, f2.lat, f2.lon)
                 distances.append((d, f2.id))
         distances.sort(key=lambda x: x[0])
-        dist_matrix[f1.id] = [fid for d, fid in distances]
+        dist_matrix[f1.id] = [(fid, d) for d, fid in distances]
 
     # 2. Initialize Simulation State
     state = {f.id: {} for f in facilities}
-    pending_orders = {f.id: {} for f in facilities} # Track deliveries: pending_orders[fac_id][med_id] = delivery_day
+    pending_orders = {f.id: {} for f in facilities} # Track deliveries: pending_orders[f_id][m_id] = {"arrival_day": X, "qty": Y}
     
-    # NEW: Detect regional shortages. If any hospital is in a crisis for a medicine, 
-    # the traditional supply chain for that medicine is considered overwhelmed/broken region-wide.
-    regional_shortages = set()
-    for inv in inventories:
-        demand = calculate_wma(inv.consumption_history)
-        if (inv.current_stock / max(0.1, demand)) <= 7.0:
-            regional_shortages.add(inv.medicine_id)
+    # Calculate Fluid Regional Strain (0.0 to 1.0)
+    medicine_strain = {}
+    for med in medicines:
+        critical_count = sum(
+            1 for inv in inventories 
+            if inv.medicine_id == med.id and (inv.current_stock / max(0.1, calculate_wma(inv.consumption_history))) <= 7.0
+        )
+        # 1 critical hospital creates 80% strain. 2+ creates 100% strain.
+        # This makes the supply chain highly reactive and fragile to unmanaged crises.
+        medicine_strain[med.id] = min(1.0, critical_count * 0.8)
             
     for inv in inventories:
         demand = calculate_wma(inv.consumption_history)
         stock = float(inv.current_stock)
         base_demand = float(demand)
+        
+        # Each hospital has its own stochastic reorder point
+        reorder_point = random.randint(15, 25)
+        
         state[inv.facility_id][inv.medicine_id] = {
             "stock": stock,
-            "base_demand": base_demand
+            "base_demand": base_demand,
+            "reorder_point": reorder_point
         }
         
         # Seed in-transit orders for Day 0
         dus = stock / max(0.1, base_demand)
-        # If stock is healthy and there's no regional shortage, the truck is already on the way!
-        if 7.0 < dus <= 21.0 and inv.medicine_id not in regional_shortages:
-            days_since_reorder = 21.0 - dus
-            days_until_arrival = 5.0 - days_since_reorder
-            delivery_day = max(1, int(math.ceil(days_until_arrival)))
-            pending_orders[inv.facility_id][inv.medicine_id] = delivery_day
+        strain = medicine_strain.get(inv.medicine_id, 0.0)
+        
+        # If stock is below reorder point (but not critically dead from a previous failure), truck is on the way
+        if 7.0 < dus <= reorder_point:
+            # Randomize arrival based on strain
+            # Normal: 3-5 days. Max Strain: 8-15 days.
+            lead_time = random.randint(3, 5) + int(strain * random.randint(5, 10))
+            delivery_day = max(1, random.randint(1, lead_time))
+            # Normal: 25-30 days. Max Strain: 5-10 days.
+            qty = max(2, random.randint(25, 30) - int(strain * random.randint(20, 25)))
+            
+            pending_orders[inv.facility_id][inv.medicine_id] = {
+                "arrival_day": delivery_day,
+                "qty": qty
+            }
             
     timeline = []
     
@@ -333,15 +351,16 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
         # A. Process Traditional Supply Chain Deliveries
         for f_id in state:
             for m_id in list(pending_orders[f_id].keys()):
-                if pending_orders[f_id][m_id] == day:
-                    # Delivery arrives! Restock 30 days worth of base demand
-                    state[f_id][m_id]["stock"] += (state[f_id][m_id]["base_demand"] * 30)
+                if pending_orders[f_id][m_id]["arrival_day"] == day:
+                    # Delivery arrives! Quantity was stochasticly determined at order time.
+                    qty = pending_orders[f_id][m_id]["qty"]
+                    state[f_id][m_id]["stock"] += (state[f_id][m_id]["base_demand"] * qty)
                     del pending_orders[f_id][m_id]
 
         # B. Resolve Patient Demand & Spillover
         for med in medicines:
-            # Setup active demand for today across all facilities
-            active_demand = {f.id: state[f.id][med.id]["base_demand"] for f in facilities if med.id in state[f.id]}
+            # Setup active demand for today across all facilities with ±15% stochastic noise
+            active_demand = {f.id: state[f.id][med.id]["base_demand"] * random.uniform(0.85, 1.15) for f in facilities if med.id in state[f.id]}
             queue = list(active_demand.keys())
             
             while queue:
@@ -353,33 +372,50 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                 stock_available = state[f_id][med.id]["stock"]
                 
                 if stock_available >= demand_needed:
-                    # Hospital successfully handled the patient load
+                    # Successfully handled
                     state[f_id][med.id]["stock"] -= demand_needed
                     active_demand[f_id] = 0
                 else:
-                    # Stockout! Consume what's left, patients spill over to nearest hospital
+                    # Stockout! Consume what's left
                     state[f_id][med.id]["stock"] = 0
-                    spillover = demand_needed - stock_available
+                    unfulfilled = demand_needed - stock_available
                     active_demand[f_id] = 0
                     
-                    # Route spillover to the closest facility that still has stock
-                    for nearest_id in dist_matrix[f_id]:
-                        if nearest_id in state and med.id in state[nearest_id]:
-                            if state[nearest_id][med.id]["stock"] > 0:
-                                active_demand[nearest_id] += spillover
-                                if nearest_id not in queue:
-                                    queue.append(nearest_id)
-                                break
+                    if unfulfilled > 0:
+                        # Route spillover to the closest facility that still has stock
+                        for nearest_id, dist_km in dist_matrix[f_id]:
+                            if nearest_id in state and med.id in state[nearest_id]:
+                                if state[nearest_id][med.id]["stock"] > 0:
+                                    # Distance-Based Friction: 1.5% drop-off per kilometer
+                                    # If nearest hospital is 5km away, ~92% transfer. If 40km away, 40% transfer.
+                                    transfer_rate = max(0.2, 1.0 - (dist_km * 0.015))
+                                    spillover = unfulfilled * transfer_rate
+                                    
+                                    active_demand[nearest_id] += spillover
+                                    if nearest_id not in queue:
+                                        queue.append(nearest_id)
+                                    break
             
             # C. Trigger Traditional Restock Orders
-            # Hospitals order via standard supply chain at the 21-day Safety Stock mark.
-            # Traditional logistics takes 5 days (significantly slower than immediate peer-to-peer sharing).
-            if med.id not in regional_shortages:
-                for f_id in state:
-                    if med.id in state[f_id]:
-                        dus = state[f_id][med.id]["stock"] / max(0.1, state[f_id][med.id]["base_demand"])
-                        if dus <= 21.0 and med.id not in pending_orders[f_id]:
-                            pending_orders[f_id][med.id] = day + 5
+            # Hospitals order via standard supply chain at their personal stochastic reorder point.
+            for f_id in state:
+                if med.id in state[f_id]:
+                    dus = state[f_id][med.id]["stock"] / max(0.1, state[f_id][med.id]["base_demand"])
+                    rp = state[f_id][med.id]["reorder_point"]
+                    
+                    if dus <= rp and med.id not in pending_orders[f_id]:
+                        strain = medicine_strain.get(med.id, 0.0)
+                        
+                        # Highly randomized lead times and quantities weighted by regional strain
+                        # Normal: 3-5 days. Max Strain: 8-15 days.
+                        lead_time = random.randint(3, 5) + int(strain * random.randint(5, 10))
+                        # Normal: 25-30 days. Max Strain: 5-10 days.
+                        qty = max(2, random.randint(25, 30) - int(strain * random.randint(20, 25)))
+                        
+                        pending_orders[f_id][med.id] = {
+                            "arrival_day": day + lead_time,
+                            "qty": qty
+                        }
                         
         # Record the grid state at the end of the day
         timeline.append({"day": day, "hospitals": get_day_snapshot()})
