@@ -256,6 +256,9 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
     medicines = db.query(Medicine).all()
     inventories = db.query(Inventory).all()
     
+    id_to_name = {f.id: f.name for f in facilities}
+    id_to_med = {m.id: m.name for m in medicines}
+    
     # 1. Precompute Distance Matrix (Haversine)
     dist_matrix = {}
     for f1 in facilities:
@@ -355,19 +358,24 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
         return day_hospitals
 
     # Day 0: Current State
-    timeline.append({"day": 0, "hospitals": get_day_snapshot()})
+    timeline.append({"day": 0, "hospitals": get_day_snapshot(), "events": []})
     
     # 3. Run the Cascade Simulation Iteratively
     for day in range(1, req.days + 1):
+        
+        day_events = []
         
         # A. Process Traditional Supply Chain Deliveries
         for f_id in state:
             for m_id in list(pending_orders[f_id].keys()):
                 if pending_orders[f_id][m_id]["arrival_day"] == day:
-                    # Delivery arrives! Quantity was stochasticly determined at order time.
+                    # Delivery arrives!
                     qty = pending_orders[f_id][m_id]["qty"]
                     state[f_id][m_id]["stock"] += (state[f_id][m_id]["base_demand"] * qty)
                     del pending_orders[f_id][m_id]
+                    
+                    med_name = id_to_med.get(m_id, "Med")
+                    day_events.append({"type": "delivery", "f_id": f_id, "qty": qty, "medicine": med_name})
                     
         # A.2 Auto-Interventions (Smart Routing)
         if req.auto_intervene:
@@ -394,6 +402,8 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                             if (donor_stock - needed_qty) / max(0.1, donor_demand) > 21.0:
                                 state[nearest_id][med.id]["stock"] -= needed_qty
                                 state[receiver_id][med.id]["stock"] += needed_qty
+                                
+                                day_events.append({"type": "intervention", "from_id": nearest_id, "to_id": receiver_id, "qty": 14, "medicine": med.name})
                                 break
 
         # B. Resolve Patient Demand & Spillover
@@ -431,6 +441,8 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                                     spillover = unfulfilled * transfer_rate
                                     
                                     active_demand[nearest_id] += spillover
+                                    day_events.append({"type": "spillover", "from_id": f_id, "to_id": nearest_id, "patients": int(spillover)})
+                                    
                                     if nearest_id not in queue:
                                         queue.append(nearest_id)
                                     break
@@ -464,6 +476,6 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                         }
                         
         # Record the grid state at the end of the day
-        timeline.append({"day": day, "hospitals": get_day_snapshot()})
+        timeline.append({"day": day, "hospitals": get_day_snapshot(), "events": day_events})
         
     return {"days": timeline}

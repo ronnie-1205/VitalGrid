@@ -63,3 +63,80 @@ body {
 @keyframes flow-ants {
   to { stroke-dashoffset: -25; }
 }
+
+/* Custom Event Dialogues */
+.event-dialogue {
+  background-color: #1A222D !important;
+  color: #E8EDF2 !important;
+  border: 1px solid #2C3A4A !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  white-space: nowrap !important;
+  /* Fade in and out to match the slower speed */
+  animation: dialogue-fade 1.8s ease-in-out forwards !important;
+}
+
+/* Coloring the text based on event type */
+.event-dialogue.critical-event { color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.4) !important; }
+.event-dialogue.success-event { color: #10b981 !important; border-color: rgba(16, 185, 129, 0.4) !important; }
+.event-dialogue.action-event { color: #3b82f6 !important; border-color: rgba(59, 130, 246, 0.4) !important; }
+
+/* Create a true dialogue box tail pointing DOWN to the hospital node */
+.event-dialogue::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 100% !important; /* Position at the bottom of the bubble */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  border-width: 6px !important;
+  border-style: solid !important;
+  /* Use the background color of the dialogue box */
+  border-color: #1A222D transparent transparent transparent !important;
+  display: block !important;
+}
+
+/* Ensure the Leaflet default arrow is hidden */
+.leaflet-tooltip-top.event-dialogue::before {
+  border-top-color: #1A222D !important;
+  bottom: -6px !important;
+}
+
+@keyframes dialogue-fade {
+  0% { opacity: 0; transform: translateY(15px) scale(0.8); }
+  15% { opacity: 1; transform: translateY(0) scale(1.05); }
+  25% { transform: translateY(0) scale(1); }
+  85% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+}
+
+/* Fast frantic patient flow */
+.flow-line-critical {
+  stroke-dasharray: 6 12;
+  animation: flow-ants 0.4s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+}
+
+/* Smooth steady medicine flow */
+.flow-line-action {
+  stroke-dasharray: 10 15;
+  animation: flow-ants 0.8s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.8));
+}
+
+/* Wrapper to prevent Leaflet from losing its coordinate positioning during animations */
+.custom-tooltip-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Ensure no native Leaflet arrows show up on the transparent wrapper */
+.custom-tooltip-wrapper::before,
+.custom-tooltip-wrapper::after {
+  display: none !important;
+}

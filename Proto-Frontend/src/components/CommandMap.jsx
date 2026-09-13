@@ -4,9 +4,12 @@ import { statusOf } from '../utils/status'
 
 const CENTER = [13.42, 74.85]
 
-export default function CommandMap({ hospitals, selectedId, activeDonorId, onSelect }) {
+export default function CommandMap({ hospitals, selectedId, activeDonorId, onSelect, events = [] }) {
   const selectedHospital = hospitals.find(h => h.id === selectedId)
   const activeDonor = hospitals.find(h => h.id === activeDonorId)
+
+  // Filter line events (spillovers and interventions)
+  const lineEvents = events.filter(e => e.type === 'spillover' || e.type === 'intervention')
 
   return (
     <MapContainer
@@ -24,8 +27,9 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
         maxZoom={20}
       />
 
+      {/* Manual Intervention UI line */}
       {selectedHospital && activeDonor && (
-        <Polyline 
+        <Polyline
           positions={[
             [activeDonor.lat, activeDonor.lng],
             [selectedHospital.lat, selectedHospital.lng]
@@ -38,11 +42,52 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
         />
       )}
 
+      {/* Simulation Line Events */}
+      {lineEvents.map((e, idx) => {
+        const fromHosp = hospitals.find(h => h.id === e.from_id);
+        const toHosp = hospitals.find(h => h.id === e.to_id);
+        if (!fromHosp || !toHosp) return null;
+
+        const isSpillover = e.type === 'spillover';
+        const color = isSpillover ? '#ef4444' : '#3b82f6';
+        const label = isSpillover ? `OVERFLOW: ${e.patients}` : `+${e.qty}d ${e.medicine} SENT`;
+        const lineClass = isSpillover ? 'flow-line-critical' : 'flow-line-action';
+        const dialogClass = isSpillover ? 'critical-event' : 'action-event';
+
+        return (
+          <React.Fragment key={`event-line-${idx}`}>
+            <Polyline
+              positions={[[fromHosp.lat, fromHosp.lng], [toHosp.lat, toHosp.lng]]}
+              pathOptions={{
+                color: color,
+                weight: isSpillover ? 5 : 4,
+                className: lineClass,
+                opacity: 0.9
+              }}
+            />
+            <CircleMarker 
+              center={[fromHosp.lat, fromHosp.lng]} 
+              radius={0} 
+              opacity={0} 
+              fillOpacity={0}
+            >
+              <Tooltip permanent direction="top" offset={[0, -25]} className="custom-tooltip-wrapper">
+                <div className={`event-dialogue ${dialogClass}`}>
+                  {label}
+                </div>
+              </Tooltip>
+            </CircleMarker>
+          </React.Fragment>
+        )
+      })}
+
       {hospitals.map((h) => {
         const s = statusOf(h.status)
         const isSelected = h.id === selectedId
         const isActiveDonor = h.id === activeDonorId
         const isHighlighted = isSelected || isActiveDonor
+        
+
         
         return (
           <React.Fragment key={h.id}>
@@ -79,6 +124,8 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
                 </div>
               </Tooltip>
             </CircleMarker>
+
+
           </React.Fragment>
         )
       })}

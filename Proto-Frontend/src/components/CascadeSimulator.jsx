@@ -25,7 +25,7 @@ export default function CascadeSimulator() {
           }
           return d + 1
         })
-      }, 800)
+      }, 1800)
     } else if (day >= TOTAL_DAYS) {
       setIsPlaying(false)
     }
@@ -113,7 +113,7 @@ export default function CascadeSimulator() {
         </div>
       )}
 
-      {!loading && <CommandMap hospitals={hospitals} selectedId={null} activeDonorId={null} onSelect={() => {}} />}
+      {!loading && <CommandMap hospitals={hospitals} selectedId={null} activeDonorId={null} onSelect={() => {}} events={dayData?.events || []} />}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[900] flex justify-center p-4">
         <div className="pointer-events-auto flex items-center gap-4 rounded-lg border border-edge bg-surface/95 px-4 py-2 shadow-panel backdrop-blur">
