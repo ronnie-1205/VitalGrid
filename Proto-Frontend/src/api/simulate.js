@@ -10,7 +10,7 @@ import { MOCK_HOSPITALS, projectHospitalOnDay } from '../data/mockData'
 // realistic spread between connected facilities. The mock here is a linear
 // per-hospital projection so the Cascade Simulator slider has something
 // believable to scrub through in the meantime.
-export async function runSimulation(days = 15, macroDisruption = false) {
+export async function runSimulation(days = 15, macroDisruption = false, autoIntervene = false) {
   if (USE_MOCKS) {
     await mockDelay(1500)
     const { MOCK_HOSPITALS } = await import('../data/mockData')
@@ -31,6 +31,6 @@ export async function runSimulation(days = 15, macroDisruption = false) {
   
   return apiFetch('/simulate', {
     method: 'POST',
-    body: JSON.stringify({ days, macro_disruption: macroDisruption })
+    body: JSON.stringify({ days, macro_disruption: macroDisruption, auto_intervene: autoIntervene })
   })
 }

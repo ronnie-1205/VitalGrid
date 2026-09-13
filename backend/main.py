@@ -248,6 +248,7 @@ def get_alerts(db: Session = Depends(get_db)):
 class SimulateRequest(BaseModel):
     days: int = 15
     macro_disruption: bool = False
+    auto_intervene: bool = False
 
 @app.post("/api/simulate")
 def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
@@ -367,6 +368,33 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                     qty = pending_orders[f_id][m_id]["qty"]
                     state[f_id][m_id]["stock"] += (state[f_id][m_id]["base_demand"] * qty)
                     del pending_orders[f_id][m_id]
+                    
+        # A.2 Auto-Interventions (Smart Routing)
+        if req.auto_intervene:
+            for med in medicines:
+                surplus = set()
+                in_need = []
+                for f_id in state:
+                    if med.id in state[f_id]:
+                        dus = state[f_id][med.id]["stock"] / max(0.1, state[f_id][med.id]["base_demand"])
+                        if dus <= 7.0:
+                            in_need.append(f_id)
+                        elif dus > 21.0:
+                            surplus.add(f_id)
+                            
+                for receiver_id in in_need:
+                    needed_qty = state[receiver_id][med.id]["base_demand"] * 14.0 # Standard 14-day rescue package
+                    
+                    for nearest_id, dist_km in dist_matrix[receiver_id]:
+                        if nearest_id in surplus:
+                            donor_stock = state[nearest_id][med.id]["stock"]
+                            donor_demand = state[nearest_id][med.id]["base_demand"]
+                            
+                            # Donor must remain > 21 days of stock after donation
+                            if (donor_stock - needed_qty) / max(0.1, donor_demand) > 21.0:
+                                state[nearest_id][med.id]["stock"] -= needed_qty
+                                state[receiver_id][med.id]["stock"] += needed_qty
+                                break
 
         # B. Resolve Patient Demand & Spillover
         for med in medicines:

@@ -12,6 +12,7 @@ export default function CascadeSimulator() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const [macroDisruption, setMacroDisruption] = useState(false)
+  const [autoIntervene, setAutoIntervene] = useState(false)
 
   useEffect(() => {
     let timer;
@@ -39,7 +40,7 @@ export default function CascadeSimulator() {
 
   const handleStart = () => {
     setLoading(true)
-    runSimulation(TOTAL_DAYS, macroDisruption)
+    runSimulation(TOTAL_DAYS, macroDisruption, autoIntervene)
       .then((res) => {
         setTimeline(res.days)
         if (day >= TOTAL_DAYS) setDay(0)
@@ -64,7 +65,7 @@ export default function CascadeSimulator() {
             <p className="text-sm text-mute">Choose the macroeconomic conditions for the 30-day projection.</p>
           </div>
           
-          <div className="mb-10 flex gap-6">
+          <div className="mb-6 flex gap-6">
             <button
               onClick={() => setMacroDisruption(false)}
               className={`flex w-72 flex-col items-start gap-2 rounded-xl border p-5 text-left transition-all ${
@@ -89,6 +90,19 @@ export default function CascadeSimulator() {
               </p>
             </button>
           </div>
+          
+          <label className="mb-10 flex w-full max-w-2xl cursor-pointer items-center gap-4 rounded-xl border border-edge bg-surface p-4 transition-all hover:bg-bg">
+            <input 
+              type="checkbox" 
+              checked={autoIntervene}
+              onChange={(e) => setAutoIntervene(e.target.checked)}
+              className="h-5 w-5 rounded accent-action"
+            />
+            <div className="flex flex-col text-left">
+              <span className="font-semibold text-ink">Enable Auto-Interventions (Smart Routing)</span>
+              <span className="text-xs text-mute">Automatically detects failing hospitals and dispatches 14-day rescue packages from geographically closest hospitals with surplus stock.</span>
+            </div>
+          </label>
 
           <button 
              onClick={handleStart}
