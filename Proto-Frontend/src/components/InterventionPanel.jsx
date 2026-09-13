@@ -38,13 +38,23 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
     if (!hospital) return
     setLoading(true)
     setApplied(false)
+    
+    const isStable = hospital.status === 'safe' || hospital.status === 'healthy'
+    
+    if (isStable) {
+      setRecommendation(null)
+      setSelectedDonorId(null)
+      setLoading(false)
+      return
+    }
+
     fetchRecommendation(hospital.id)
       .then((res) => {
         setRecommendation(res)
         if (res?.action) setSelectedDonorId(res.action.fromHospitalId)
       })
       .finally(() => setLoading(false))
-  }, [hospital?.id])
+  }, [hospital?.id, hospital?.status])
 
   useEffect(() => {
     if (onDonorChange) {
