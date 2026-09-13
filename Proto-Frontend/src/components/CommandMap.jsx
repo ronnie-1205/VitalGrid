@@ -1,3 +1,4 @@
+import React from 'react'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { statusOf } from '../utils/status'
 
@@ -24,25 +25,41 @@ export default function CommandMap({ hospitals, selectedId, onSelect }) {
         const s = statusOf(h.status)
         const isSelected = h.id === selectedId
         return (
-          <CircleMarker
-            key={h.id}
-            center={[h.lat, h.lng]}
-            radius={isSelected ? 11 : 8}
-            pathOptions={{
-              color: s.color,
-              fillColor: s.color,
-              fillOpacity: h.status === 'critical' ? 0.9 : 0.75,
-              weight: isSelected ? 3 : 1.5,
-            }}
-            eventHandlers={{ click: () => onSelect(h.id) }}
-          >
-            <Tooltip direction="top" offset={[0, -8]} opacity={1}>
-              <div className="font-sans text-xs">
-                <div className="font-semibold">{h.name}</div>
-                <div style={{ color: s.color }}>{s.label}</div>
-              </div>
-            </Tooltip>
-          </CircleMarker>
+          <React.Fragment key={h.id}>
+            {/* The white spotlight / halo effect behind the selected node */}
+            {isSelected && (
+              <CircleMarker
+                center={[h.lat, h.lng]}
+                radius={22}
+                pathOptions={{
+                  stroke: false,
+                  fillColor: '#ffffff',
+                  fillOpacity: 0.2,
+                  className: 'animate-pulse'
+                }}
+              />
+            )}
+            
+            {/* The primary hospital node */}
+            <CircleMarker
+              center={[h.lat, h.lng]}
+              radius={isSelected ? 11 : 8}
+              pathOptions={{
+                color: isSelected ? '#ffffff' : s.color,
+                fillColor: s.color,
+                fillOpacity: h.status === 'critical' ? 0.9 : 0.75,
+                weight: isSelected ? 3 : 1.5,
+              }}
+              eventHandlers={{ click: () => onSelect(h.id) }}
+            >
+              <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+                <div className="font-sans text-xs">
+                  <div className="font-semibold">{h.name}</div>
+                  <div style={{ color: s.color }}>{s.label}</div>
+                </div>
+              </Tooltip>
+            </CircleMarker>
+          </React.Fragment>
         )
       })}
     </MapContainer>
