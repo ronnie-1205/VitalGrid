@@ -246,7 +246,8 @@ def get_alerts(db: Session = Depends(get_db)):
     return alerts
 
 class SimulateRequest(BaseModel):
-    days: int
+    days: int = 15
+    macro_disruption: bool = False
 
 @app.post("/api/simulate")
 def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
@@ -300,12 +301,22 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
         
         # If stock is below reorder point (but not critically dead from a previous failure), truck is on the way
         if 7.0 < dus <= reorder_point:
-            # Randomize arrival based on strain
-            # Normal: 3-5 days. Max Strain: 8-15 days.
-            lead_time = random.randint(3, 5) + int(strain * random.randint(5, 10))
+            # 1. Base dynamic calculation
+            base_strain = medicine_strain.get(inv.medicine_id, 0.0)
+            
+            # 2. Hard Mode instantly adds 30% artificial strain
+            effective_strain = min(1.0, base_strain + 0.3) if req.macro_disruption else base_strain
+            
+            # 3. Calculate normal dynamic math
+            lead_time = random.randint(3, 5) + int(effective_strain * random.randint(5, 10))
+            qty = max(2, random.randint(25, 30) - int(effective_strain * random.randint(20, 25)))
+            
+            # 4. If Hard Mode is active, apply physical disruption penalties on top
+            if req.macro_disruption:
+                lead_time += random.randint(2, 4)
+                qty = max(2, int(qty * random.uniform(0.7, 0.9)))
+                
             delivery_day = max(1, random.randint(1, lead_time))
-            # Normal: 25-30 days. Max Strain: 5-10 days.
-            qty = max(2, random.randint(25, 30) - int(strain * random.randint(20, 25)))
             
             pending_orders[inv.facility_id][inv.medicine_id] = {
                 "arrival_day": delivery_day,
@@ -404,13 +415,20 @@ def run_simulate(req: SimulateRequest, db: Session = Depends(get_db)):
                     rp = state[f_id][med.id]["reorder_point"]
                     
                     if dus <= rp and med.id not in pending_orders[f_id]:
-                        strain = medicine_strain.get(med.id, 0.0)
+                        # 1. Base dynamic calculation
+                        base_strain = medicine_strain.get(med.id, 0.0)
                         
-                        # Highly randomized lead times and quantities weighted by regional strain
-                        # Normal: 3-5 days. Max Strain: 8-15 days.
-                        lead_time = random.randint(3, 5) + int(strain * random.randint(5, 10))
-                        # Normal: 25-30 days. Max Strain: 5-10 days.
-                        qty = max(2, random.randint(25, 30) - int(strain * random.randint(20, 25)))
+                        # 2. Hard Mode instantly adds 30% artificial strain
+                        effective_strain = min(1.0, base_strain + 0.3) if req.macro_disruption else base_strain
+                        
+                        # 3. Calculate normal dynamic math
+                        lead_time = random.randint(3, 5) + int(effective_strain * random.randint(5, 10))
+                        qty = max(2, random.randint(25, 30) - int(effective_strain * random.randint(20, 25)))
+                        
+                        # 4. If Hard Mode is active, apply physical disruption penalties on top
+                        if req.macro_disruption:
+                            lead_time += random.randint(2, 4)
+                            qty = max(2, int(qty * random.uniform(0.7, 0.9)))
                         
                         pending_orders[f_id][med.id] = {
                             "arrival_day": day + lead_time,

@@ -10,20 +10,27 @@ import { MOCK_HOSPITALS, projectHospitalOnDay } from '../data/mockData'
 // realistic spread between connected facilities. The mock here is a linear
 // per-hospital projection so the Cascade Simulator slider has something
 // believable to scrub through in the meantime.
-export async function runSimulation(days = 15) {
+export async function runSimulation(days = 15, macroDisruption = false) {
   if (USE_MOCKS) {
-    await mockDelay(600)
+    await mockDelay(1500)
+    const { MOCK_HOSPITALS } = await import('../data/mockData')
+    
     const timeline = []
-    for (let day = 0; day <= days; day++) {
+    for (let d = 0; d <= days; d++) {
       timeline.push({
-        day,
-        hospitals: MOCK_HOSPITALS.map((h) => projectHospitalOnDay(h, day)),
+        day: d,
+        hospitals: MOCK_HOSPITALS.map((h) => ({
+          ...h,
+          status: d > 2 && h.id === 1 ? 'critical' : h.status,
+          daysOfOxygenLeft: Math.max(0, h.stock.oxygen / 10 - d * 0.5)
+        }))
       })
     }
     return { days: timeline }
   }
+  
   return apiFetch('/simulate', {
     method: 'POST',
-    body: JSON.stringify({ days }),
+    body: JSON.stringify({ days, macro_disruption: macroDisruption })
   })
 }

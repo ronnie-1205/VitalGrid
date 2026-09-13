@@ -8,15 +8,10 @@ const TOTAL_DAYS = 30
 export default function CascadeSimulator() {
   const [timeline, setTimeline] = useState(null)
   const [day, setDay] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
-
-  useEffect(() => {
-    runSimulation(TOTAL_DAYS)
-      .then((res) => setTimeline(res.days))
-      .finally(() => setLoading(false))
-  }, [])
+  const [macroDisruption, setMacroDisruption] = useState(false)
 
   useEffect(() => {
     let timer;
@@ -43,24 +38,61 @@ export default function CascadeSimulator() {
   const warningCount = hospitals.filter((h) => h.status === 'warning').length
 
   const handleStart = () => {
-    if (day >= TOTAL_DAYS) setDay(0);
-    setHasStarted(true)
-    setIsPlaying(true)
+    setLoading(true)
+    runSimulation(TOTAL_DAYS, macroDisruption)
+      .then((res) => {
+        setTimeline(res.days)
+        if (day >= TOTAL_DAYS) setDay(0)
+        setHasStarted(true)
+        setIsPlaying(true)
+      })
+      .finally(() => setLoading(false))
   }
 
   return (
     <div className="relative flex-1">
       {loading && (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-bg/80">
-          <p className="font-mono text-sm text-mute">Running 15-day projection…</p>
+          <p className="font-mono text-sm text-mute">Running 30-day stochastic projection…</p>
         </div>
       )}
 
       {!hasStarted && !loading && (
-        <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-bg/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-[1000] flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md">
+          <div className="mb-8 max-w-2xl text-center">
+            <h2 className="mb-2 text-2xl font-bold text-ink">Configure Simulation</h2>
+            <p className="text-sm text-mute">Choose the macroeconomic conditions for the 30-day projection.</p>
+          </div>
+          
+          <div className="mb-10 flex gap-6">
+            <button
+              onClick={() => setMacroDisruption(false)}
+              className={`flex w-72 flex-col items-start gap-2 rounded-xl border p-5 text-left transition-all ${
+                !macroDisruption ? 'border-action bg-action/10' : 'border-edge bg-surface hover:border-action/50'
+              }`}
+            >
+              <h3 className="font-semibold text-ink">Base Analytics Model</h3>
+              <p className="text-xs text-mute">
+                Run the standard fluid simulation. Hospitals face dynamic delivery times (3-15 days) based strictly on current regional health metrics.
+              </p>
+            </button>
+            
+            <button
+              onClick={() => setMacroDisruption(true)}
+              className={`flex w-72 flex-col items-start gap-2 rounded-xl border p-5 text-left transition-all ${
+                macroDisruption ? 'border-critical bg-critical/10' : 'border-edge bg-surface hover:border-critical/50'
+              }`}
+            >
+              <h3 className="font-semibold text-critical">Macro-Disruption Mode</h3>
+              <p className="text-xs text-mute">
+                Inject massive real-world chaos. Simulates a national logistics strike with 25% dropped orders, random severe delays (up to 14 extra days), and extreme partial rationing (15-70% fills).
+              </p>
+            </button>
+          </div>
+
           <button 
              onClick={handleStart}
-             className="rounded-lg bg-action px-8 py-3 font-semibold text-bg shadow-lg hover:bg-action/90 transition-all"
+             className="rounded-lg bg-action px-8 py-3 font-semibold text-bg shadow-lg transition-all hover:bg-action/90"
           >
             Start Simulation
           </button>
@@ -116,6 +148,19 @@ export default function CascadeSimulator() {
               ))}
             </div>
           </div>
+          
+          <button
+            onClick={() => {
+              setHasStarted(false)
+              setIsPlaying(false)
+              setDay(0)
+              setTimeline(null)
+            }}
+            disabled={loading || !hasStarted}
+            className="flex h-10 shrink-0 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-bg disabled:opacity-50"
+          >
+            Reset
+          </button>
         </div>
       </div>
     </div>
