@@ -144,10 +144,18 @@ pip install -r requirements.txt
 ```
 
 ### 3. Launch the Application
+
+**For Mac/Linux:**
 ```bash
 ./start.sh
 ```
-*Note: The `start.sh` script is completely automated. It will dynamically generate synthetic data, seed the SQLite database, boot the FastAPI backend on port `8001`, install frontend npm modules if necessary, and launch the React frontend on port `5173`. Do not close the terminal.*
+*Note: The script will automatically generate synthetic data, seed the SQLite database, boot the FastAPI backend on port `8001`, install frontend npm modules, and launch the React frontend on port `5173`. Do not close the terminal.*
+
+**For Windows:**
+```cmd
+start.bat
+```
+*Note: The batch script will automatically open two new console windows for the frontend and backend servers. To shut down the application, simply close those two windows.*
 
 ---
 
