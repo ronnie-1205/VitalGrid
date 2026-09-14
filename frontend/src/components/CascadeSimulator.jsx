@@ -14,6 +14,7 @@ export default function CascadeSimulator() {
   const [macroDisruption, setMacroDisruption] = useState(false)
   const [autoIntervene, setAutoIntervene] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
+  const [selectedId, setSelectedId] = useState(null)
 
   useEffect(() => {
     let timer;
@@ -36,6 +37,22 @@ export default function CascadeSimulator() {
 
   const dayData = useMemo(() => timeline?.find((d) => d.day === day), [timeline, day])
   const hospitals = dayData?.hospitals || []
+
+  const selectedHospital = useMemo(() => hospitals.find(h => h.id === selectedId) || null, [hospitals, selectedId])
+
+  const historicalEvents = useMemo(() => {
+    if (!selectedId || !timeline) return [];
+    
+    const hist = [];
+    for (let d = 0; d <= day; d++) {
+      const dData = timeline.find(t => t.day === d);
+      if (dData && dData.events) {
+        const hEvents = dData.events.filter(e => e.f_id === selectedId || e.from_id === selectedId || e.to_id === selectedId);
+        hEvents.forEach(e => hist.push({ day: d, ...e }))
+      }
+    }
+    return hist.reverse(); // Newest first
+  }, [timeline, day, selectedId])
 
   const criticalCount = hospitals.filter((h) => h.status === 'critical').length
   const warningCount = hospitals.filter((h) => h.status === 'warning').length
@@ -115,7 +132,58 @@ export default function CascadeSimulator() {
         </div>
       )}
 
-      {!loading && <CommandMap hospitals={hospitals} selectedId={null} activeDonorId={null} onSelect={() => {}} events={dayData?.events || []} />}
+      {!loading && <CommandMap hospitals={hospitals} selectedId={selectedId} activeDonorId={null} onSelect={setSelectedId} events={dayData?.events || []} />}
+
+      {hasStarted && selectedHospital && (
+        <div className="absolute right-4 top-4 bottom-24 z-[900] flex w-80 flex-col overflow-hidden rounded-xl border border-edge bg-surface/90 shadow-panel backdrop-blur transition-all">
+          <div className="flex items-center justify-between border-b border-edge bg-bg/50 px-4 py-3">
+             <div>
+                <h3 className="text-sm font-semibold text-ink">{selectedHospital.name}</h3>
+                <span className="text-xs text-mute">Historical Events</span>
+             </div>
+             <button onClick={() => setSelectedId(null)} className="text-mute hover:text-ink">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+             </button>
+          </div>
+          <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4">
+             {historicalEvents.length === 0 ? (
+                <p className="mt-4 text-center text-sm italic text-mute">No logistics events recorded yet.</p>
+             ) : (
+                historicalEvents.map((e, idx) => {
+                   let msg = '';
+                   let color = '';
+                   let icon = null;
+                   
+                   if (e.type === 'spillover') {
+                     const isSource = e.from_id === selectedHospital.id;
+                     color = 'text-critical';
+                     icon = <div className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-critical" />;
+                     msg = isSource ? `OVERFLOW: Dumped ${e.patients} patients` : `CRISIS: Hit with ${e.patients} overflow patients`;
+                   } else if (e.type === 'intervention') {
+                     const isSource = e.from_id === selectedHospital.id;
+                     color = 'text-action';
+                     icon = <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-action" />;
+                     msg = isSource ? `SMART ROUTE: Donated 14d ${e.medicine}` : `SMART ROUTE: Received 14d ${e.medicine}`;
+                   } else if (e.type === 'delivery') {
+                     color = 'text-success';
+                     icon = <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-success" />;
+                     msg = `RESTOCK: +${e.qty}d ${e.medicine} delivered`;
+                   }
+                   
+                   return (
+                     <div key={idx} className="flex items-start gap-3 text-sm">
+                       {icon}
+                       <div>
+                         <div className="text-[10px] font-mono font-bold text-mute mb-0.5">DAY {e.day}</div>
+                         <p className={`leading-snug font-medium ${color}`}>{msg}</p>
+                       </div>
+                     </div>
+                   );
+                })
+             )}
+          </div>
+        </div>
+      )}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[900] flex justify-center p-4">
         <div className="pointer-events-auto flex items-center gap-4 rounded-lg border border-edge bg-surface/95 px-4 py-2 shadow-panel backdrop-blur">
