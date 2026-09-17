@@ -17,11 +17,11 @@ export default function CascadeSimulator() {
   const [selectedId, setSelectedId] = useState(null)
   
   const [showGuide, setShowGuide] = useState(() => {
-    return sessionStorage.getItem('cascadeGuideSeen') !== 'true';
+    return sessionStorage.getItem('cascadeGuideSeenV2') !== 'true';
   })
 
   const dismissGuide = () => {
-    sessionStorage.setItem('cascadeGuideSeen', 'true');
+    sessionStorage.setItem('cascadeGuideSeenV2', 'true');
     setShowGuide(false);
   }
 
@@ -142,7 +142,7 @@ export default function CascadeSimulator() {
         </div>
       )}
 
-      {!hasStarted && !loading && (
+      {!hasStarted && !loading && !showGuide && (
         <div className="absolute inset-0 z-[1000] flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md">
           <div className="mb-8 max-w-2xl text-center">
             <h2 className="mb-2 text-2xl font-bold text-ink">Configure Simulation</h2>

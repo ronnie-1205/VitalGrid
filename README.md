@@ -4,6 +4,49 @@ A comprehensive simulation and management dashboard for healthcare supply chains
 
 ---
 
+## 🚀 Installation & Setup
+
+VitalGrid is designed to be completely universal. You can run it on any machine using either a standard Python virtual environment (`venv`) or `conda`. 
+
+### Prerequisites
+- Node.js (v18+)
+- Python (3.9+)
+
+### 1. Create a Virtual Environment
+```bash
+# Using venv
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# OR using Conda
+conda create -n vitalgrid python=3.11
+conda activate vitalgrid
+```
+
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+
+# Note: The startup scripts will automatically install the Node.js frontend dependencies (npm install) on first boot.
+```
+
+### 3. Launch the Application
+
+**For Mac/Linux:**
+```bash
+./start.sh
+```
+*Note: The script will automatically generate synthetic data, seed the SQLite database, boot the FastAPI backend on port `8001`, install frontend npm modules, and launch the React frontend on port `5173`. Do not close the terminal.*
+
+**For Windows:**
+```cmd
+start.bat
+```
+*Note: The batch script will automatically open two new console windows for the frontend and backend servers. To shut down the application, simply close those two windows.*
+
+---
+
 ## 📌 Project Overview
 VitalGrid was built to solve the complex problem of regional healthcare supply chain collapse during crisis events. When a hospital runs out of critical medicine (like Oxygen or Antibiotics), untreated patients are forced to travel to neighboring hospitals. This physically transfers the demand, causing the neighboring hospital's consumption to spike unpredictably, eventually triggering a vicious network-wide cascade of stockouts. 
 
@@ -116,46 +159,6 @@ VitalGrid/
 ├── start.sh                 # Universal boot script
 └── requirements.txt         # Python dependencies
 ```
-
----
-
-## 🚀 Installation & Setup
-
-VitalGrid is designed to be completely universal. You can run it on any machine using either a standard Python virtual environment (`venv`) or `conda`. 
-
-### Prerequisites
-- Node.js (v18+)
-- Python (3.9+)
-
-### 1. Create a Virtual Environment
-```bash
-# Using venv
-python -m venv venv
-source venv/bin/activate
-
-# OR using Conda
-conda create -n vitalgrid python=3.11
-conda activate vitalgrid
-```
-
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Launch the Application
-
-**For Mac/Linux:**
-```bash
-./start.sh
-```
-*Note: The script will automatically generate synthetic data, seed the SQLite database, boot the FastAPI backend on port `8001`, install frontend npm modules, and launch the React frontend on port `5173`. Do not close the terminal.*
-
-**For Windows:**
-```cmd
-start.bat
-```
-*Note: The batch script will automatically open two new console windows for the frontend and backend servers. To shut down the application, simply close those two windows.*
 
 ---
 

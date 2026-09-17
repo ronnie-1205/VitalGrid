@@ -15,7 +15,7 @@ python seed_db.py
 
 echo.
 echo [2/4] Starting Python FastAPI Backend on Port 8001...
-start "VitalGrid Backend" cmd /c "uvicorn main:app --reload --port 8001"
+start "VitalGrid Backend" python -m uvicorn main:app --reload --port 8001
 
 echo.
 echo [3/4] Waiting for backend to boot...
@@ -26,15 +26,15 @@ echo [4/4] Starting React Frontend on Port 5173...
 cd /d "%PROJECT_ROOT%frontend"
 
 if not exist node_modules\ (
-    echo 📦 Installing frontend dependencies (this might take a minute)...
+    echo [!] Installing frontend dependencies (this might take a minute)...
     call npm install
 )
 
-start "VitalGrid Frontend" cmd /c "npm run dev"
+start "VitalGrid Frontend" npm run dev
 
 echo.
 echo ===================================================
-echo ✅ VitalGrid is successfully running!
+echo [SUCCESS] VitalGrid is successfully running!
 echo.
 echo NOTE: Two new console windows have been opened for 
 echo the Backend and Frontend servers.
