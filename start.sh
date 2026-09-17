@@ -8,19 +8,6 @@ trap 'echo -e "\n🛑 Shutting down VitalGrid servers..."; kill $(jobs -p); exit
 
 cd "$PROJECT_ROOT"
 
-if [ ! -d "venv" ]; then
-    echo "📦 No virtual environment found. Creating 'venv'..."
-    python3 -m venv venv
-    
-    echo "📦 Activating venv and installing Python dependencies..."
-    source venv/bin/activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    echo ""
-else
-    source venv/bin/activate
-fi
-
 echo "🟢 Generating synthetic data and seeding database..."
 cd "$PROJECT_ROOT/backend" || exit
 python generate_data.py

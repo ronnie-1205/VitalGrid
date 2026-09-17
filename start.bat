@@ -30,7 +30,7 @@ python seed_db.py
 
 echo.
 echo [2/4] Starting Python FastAPI Backend on Port 8001...
-start "VitalGrid Backend" python -m uvicorn main:app --reload --port 8001
+start "VitalGrid Backend" cmd /k "python -m uvicorn main:app --reload --port 8001"
 
 echo.
 echo [3/4] Waiting for backend to boot...
@@ -45,7 +45,7 @@ if not exist node_modules\ (
     call npm install
 )
 
-start "VitalGrid Frontend" npm run dev
+start "VitalGrid Frontend" cmd /k "npm run dev"
 
 echo.
 echo ===================================================
