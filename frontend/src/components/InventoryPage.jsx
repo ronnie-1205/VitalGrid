@@ -67,17 +67,17 @@ export default function InventoryPage({ hospital, onClose }) {
                       {data.stock} <span className="text-xs text-mute">{data.unit}</span>
                     </td>
                     <td className="px-4 py-3 text-right font-mono">
-                      <span className={data.days <= 5 ? 'text-red-500 font-bold' : 'text-ink'}>
+                      <span className={data.days <= 5 ? 'text-critical font-bold' : 'text-ink'}>
                         {data.days}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       {data.days <= 3 ? (
-                        <span className="inline-flex rounded-full bg-red-500/10 px-2 py-1 text-xs font-medium text-red-500">Critical</span>
+                        <span className="inline-flex rounded-full bg-critical/10 px-2 py-1 text-xs font-medium text-critical">Critical</span>
                       ) : data.days <= 7 ? (
-                        <span className="inline-flex rounded-full bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-500">Warning</span>
+                        <span className="inline-flex rounded-full bg-warning/10 px-2 py-1 text-xs font-medium text-warning">Warning</span>
                       ) : (
-                        <span className="inline-flex rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-green-500">Safe</span>
+                        <span className="inline-flex rounded-full bg-healthy/10 px-2 py-1 text-xs font-medium text-healthy">Safe</span>
                       )}
                     </td>
                   </tr>

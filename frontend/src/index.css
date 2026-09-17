@@ -13,33 +13,33 @@ body {
 /* Leaflet ships its own control chrome — restyle it to sit inside a dark
    command-center UI instead of the default light-map look. */
 .leaflet-container {
-  background: #0B0F14;
+  background: #FDF0D5;
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
 }
 
 .leaflet-control-zoom a {
-  background-color: #1A222D !important;
-  color: #E8EDF2 !important;
-  border-color: #232C38 !important;
+  background-color: #FFFFFF !important;
+  color: #003049 !important;
+  border-color: #669BBC !important;
 }
 
 .leaflet-control-zoom a:hover {
-  background-color: #232C38 !important;
+  background-color: #669BBC !important;
 }
 
 .leaflet-control-attribution {
-  background: rgba(11, 15, 20, 0.7) !important;
-  color: #8A97A5 !important;
+  background: rgba(253, 240, 213, 0.7) !important;
+  color: #669BBC !important;
 }
 
 .leaflet-control-attribution a {
-  color: #8A97A5 !important;
+  color: #669BBC !important;
 }
 
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-  background: #1A222D;
-  color: #E8EDF2;
+  background: #FFFFFF;
+  color: #003049;
 }
 
 .pulse-ring {
@@ -66,9 +66,9 @@ body {
 
 /* Custom Event Dialogues */
 .event-dialogue {
-  background-color: #1A222D !important;
-  color: #E8EDF2 !important;
-  border: 1px solid #2C3A4A !important;
+  background-color: #FFFFFF !important;
+  color: #003049 !important;
+  border: 1px solid #669BBC !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
@@ -81,9 +81,9 @@ body {
 }
 
 /* Coloring the text based on event type */
-.event-dialogue.critical-event { color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.4) !important; }
-.event-dialogue.success-event { color: #10b981 !important; border-color: rgba(16, 185, 129, 0.4) !important; }
-.event-dialogue.action-event { color: #3b82f6 !important; border-color: rgba(59, 130, 246, 0.4) !important; }
+.event-dialogue.critical-event { color: #C1121F !important; border-color: rgba(193, 18, 31, 0.4) !important; }
+.event-dialogue.success-event { color: #4A7C59 !important; border-color: rgba(74, 124, 89, 0.4) !important; }
+.event-dialogue.action-event { color: #669BBC !important; border-color: rgba(102, 155, 188, 0.4) !important; }
 
 /* Create a true dialogue box tail pointing DOWN to the hospital node */
 .event-dialogue::before {
@@ -95,13 +95,13 @@ body {
   border-width: 6px !important;
   border-style: solid !important;
   /* Use the background color of the dialogue box */
-  border-color: #1A222D transparent transparent transparent !important;
+  border-color: #FFFFFF transparent transparent transparent !important;
   display: block !important;
 }
 
 /* Ensure the Leaflet default arrow is hidden */
 .leaflet-tooltip-top.event-dialogue::before {
-  border-top-color: #1A222D !important;
+  border-top-color: #FFFFFF !important;
   bottom: -6px !important;
 }
 
@@ -117,14 +117,14 @@ body {
 .flow-line-critical {
   stroke-dasharray: 6 12;
   animation: flow-ants 0.4s linear infinite;
-  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+  filter: drop-shadow(0 0 4px rgba(193, 18, 31, 0.8));
 }
 
 /* Smooth steady medicine flow */
 .flow-line-action {
   stroke-dasharray: 10 15;
   animation: flow-ants 0.8s linear infinite;
-  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.8));
+  filter: drop-shadow(0 0 4px rgba(102, 155, 188, 0.8));
 }
 
 /* Wrapper to prevent Leaflet from losing its coordinate positioning during animations */

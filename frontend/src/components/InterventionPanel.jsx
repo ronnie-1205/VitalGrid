@@ -14,10 +14,10 @@ function StockoutBadge({ days }) {
   const isWarning = days > 3 && days <= 7
 
   const colorClasses = isCritical
-    ? 'bg-red-600 text-white'
+    ? 'bg-critical text-bg'
     : isWarning
-    ? 'bg-yellow-500 text-black'
-    : 'bg-green-600 text-white'
+    ? 'bg-warning text-ink'
+    : 'bg-healthy text-bg'
 
   return (
     <div className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-bold shadow-md ${colorClasses}`}>
@@ -125,9 +125,9 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
           <dl className="grid grid-cols-2 gap-2 font-mono text-sm">
             {criticalItems.length > 0 ? (
               criticalItems.map(([item, data]) => (
-                <div key={item} className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-2">
+                <div key={item} className="rounded-md border border-critical/30 bg-critical/10 px-2 py-2">
                   <dt className="text-[10px] capitalize text-mute">{item}</dt>
-                  <dd className="text-red-400 font-semibold">{data.days} Days left</dd>
+                  <dd className="text-critical font-semibold">{data.days} Days left</dd>
                 </div>
               ))
             ) : (
@@ -175,7 +175,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
                   </button>
 
                   {applied && (
-                    <p className="mt-2 text-xs text-green-500 font-medium">
+                    <p className="mt-2 text-xs text-healthy font-medium">
                       Transfer verified and committed to database!
                     </p>
                   )}

@@ -93,15 +93,15 @@ export default function CascadeSimulator() {
               <div className="space-y-4">
                 <h3 className="font-semibold text-ink border-b border-edge pb-2">Hospital Status</h3>
                 <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 rounded-full bg-success shadow-[0_0_8px_var(--color-success)]"></div>
-                  <span className="text-sm text-ink"><strong className="text-success">Safe:</strong> &gt;7 days of stock</span>
+                  <div className="h-3 w-3 rounded-full bg-healthy shadow-[0_0_8px_#4A7C59]"></div>
+                  <span className="text-sm text-ink"><strong className="text-healthy">Safe:</strong> &gt;7 days of stock</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 rounded-full bg-warning shadow-[0_0_8px_var(--color-warning)]"></div>
+                  <div className="h-3 w-3 rounded-full bg-warning shadow-[0_0_8px_#D67D00]"></div>
                   <span className="text-sm text-ink"><strong className="text-warning">At Risk:</strong> 4-7 days of stock</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 rounded-full bg-critical shadow-[0_0_8px_var(--color-critical)]"></div>
+                  <div className="h-3 w-3 rounded-full bg-critical shadow-[0_0_8px_#C1121F]"></div>
                   <span className="text-sm text-ink"><strong className="text-critical">Critical:</strong> 0-3 days of stock</span>
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function CascadeSimulator() {
             <div className="mt-8 flex justify-end">
               <button 
                 onClick={dismissGuide}
-                className="rounded-lg bg-action px-8 py-2.5 text-sm font-semibold text-bg transition-all hover:bg-action/90"
+                className="rounded-lg bg-surface px-8 py-2.5 text-sm font-semibold text-ink border border-edge shadow-sm transition-all hover:bg-surface/90"
               >
                 I understand, let's start
               </button>
@@ -190,7 +190,7 @@ export default function CascadeSimulator() {
 
           <button 
              onClick={handleStart}
-             className="rounded-lg bg-action px-8 py-3 font-semibold text-bg shadow-lg transition-all hover:bg-action/90"
+             className="rounded-lg bg-surface px-8 py-3 font-semibold text-ink border border-edge shadow-lg transition-all hover:bg-surface/90"
           >
             Start Simulation
           </button>
@@ -230,8 +230,8 @@ export default function CascadeSimulator() {
                      icon = <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-action" />;
                      msg = isSource ? `SMART ROUTE: Donated 14d ${e.medicine}` : `SMART ROUTE: Received 14d ${e.medicine}`;
                    } else if (e.type === 'delivery') {
-                     color = 'text-success';
-                     icon = <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-success" />;
+                     color = 'text-healthy';
+                     icon = <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-healthy" />;
                      msg = `RESTOCK: +${e.qty}d ${e.medicine} delivered`;
                    }
                    
@@ -268,7 +268,7 @@ export default function CascadeSimulator() {
                setIsPlaying(!isPlaying);
              }}
              disabled={loading}
-             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-action text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface text-ink border border-edge shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {isPlaying ? (
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>

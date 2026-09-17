@@ -18,11 +18,11 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
       zoomControl={true}
       attributionControl={false}
       className="h-full w-full"
-      style={{ background: '#0B0F14' }}
+      style={{ background: '#FDF0D5' }}
     >
       <TileLayer
         // Dark basemap so the status dots stay the loudest thing on screen.
-        url={`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${import.meta.env.VITE_CARTO_API_KEY ? '?key=' + import.meta.env.VITE_CARTO_API_KEY : ''}`}
+        url={`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png${import.meta.env.VITE_CARTO_API_KEY ? '?key=' + import.meta.env.VITE_CARTO_API_KEY : ''}`}
         subdomains="abcd"
         maxZoom={20}
       />
@@ -35,7 +35,7 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
             [selectedHospital.lat, selectedHospital.lng]
           ]}
           pathOptions={{
-            color: '#3b82f6', // Tailwind blue-500
+            color: '#669BBC', // Tailwind blue-500
             weight: 4,
             className: 'flow-line'
           }}
@@ -49,7 +49,7 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
         if (!fromHosp || !toHosp) return null;
 
         const isSpillover = e.type === 'spillover';
-        const color = isSpillover ? '#ef4444' : '#3b82f6';
+        const color = isSpillover ? '#C1121F' : '#669BBC';
         const label = isSpillover ? `OVERFLOW: ${e.patients}` : `+${e.qty}d ${e.medicine} SENT`;
         const lineClass = isSpillover ? 'flow-line-critical' : 'flow-line-action';
         const dialogClass = isSpillover ? 'critical-event' : 'action-event';
@@ -98,7 +98,7 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
                 radius={22}
                 pathOptions={{
                   stroke: false,
-                  fillColor: isActiveDonor ? '#3b82f6' : '#ffffff',
+                  fillColor: isActiveDonor ? '#669BBC' : '#FDF0D5',
                   fillOpacity: isActiveDonor ? 0.3 : 0.2,
                   className: 'animate-pulse'
                 }}
@@ -110,8 +110,8 @@ export default function CommandMap({ hospitals, selectedId, activeDonorId, onSel
               center={[h.lat, h.lng]}
               radius={isHighlighted ? 11 : 8}
               pathOptions={{
-                color: isHighlighted ? '#ffffff' : s.color,
-                fillColor: isActiveDonor ? '#3b82f6' : s.color,
+                color: isHighlighted ? '#FDF0D5' : s.color,
+                fillColor: isActiveDonor ? '#669BBC' : s.color,
                 fillOpacity: (h.status === 'critical' || isActiveDonor) ? 0.9 : 0.75,
                 weight: isHighlighted ? 3 : 1.5,
               }}

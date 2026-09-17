@@ -1,7 +1,7 @@
 export const STATUS = {
-  healthy: { label: 'Stable', color: '#34C77B', dim: 'rgba(52,199,123,0.18)' },
-  warning: { label: 'At risk', color: '#E8A33D', dim: 'rgba(232,163,61,0.18)' },
-  critical: { label: 'Critical', color: '#E5484D', dim: 'rgba(229,72,77,0.18)' },
+  healthy: { label: 'Stable', color: '#4A7C59', dim: 'rgba(74,124,89,0.18)' },
+  warning: { label: 'At risk', color: '#D67D00', dim: 'rgba(214,125,0,0.18)' },
+  critical: { label: 'Critical', color: '#C1121F', dim: 'rgba(193,18,31,0.18)' },
 }
 
 export function statusOf(status) {
