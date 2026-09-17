@@ -16,7 +16,7 @@ export default function Header({
   );
 
   return (
-    <header className="flex items-center justify-between border-b border-edge bg-surface px-6 py-3">
+    <header className="flex items-center justify-between border-b border-edge bg-bg px-6 py-3">
       {/* Left side - Title */}
       <div className="flex items-center gap-3">
         <div className="h-2 w-2 rounded-full bg-healthy" />
@@ -33,7 +33,7 @@ export default function Header({
       </div>
 
       {/* Middle - Navigation */}
-      <nav className="flex items-center gap-1 rounded-lg border border-edge bg-bg p-1">
+      <nav className="flex items-center gap-1 rounded-lg border border-edge bg-surface p-1">
         {[
           { id: 'command', label: 'Command Center' },
           { id: 'simulator', label: 'Cascade Simulator' },
@@ -77,7 +77,7 @@ export default function Header({
         {/* Logged-in user */}
         {user && (
           <div className="flex items-center gap-3 border-l border-edge pl-4">
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-ink">
               {user.email}
             </span>
 

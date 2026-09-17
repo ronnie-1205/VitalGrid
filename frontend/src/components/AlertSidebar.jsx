@@ -4,7 +4,7 @@ export default function AlertSidebar({ alerts, hospitals, onSelect }) {
   const hospitalName = (id) => hospitals.find((h) => h.id === id)?.name || 'Unknown facility'
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-edge bg-surface">
+    <aside className="flex w-80 shrink-0 flex-col border-l border-edge bg-bg">
       <div className="border-b border-edge px-4 py-3">
         <h2 className="text-sm font-semibold text-ink">Urgent alerts</h2>
         <p className="text-xs text-mute">{alerts.length} open across the network</p>

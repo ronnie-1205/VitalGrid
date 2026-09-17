@@ -94,7 +94,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
     : [];
 
   return (
-    <div className="absolute inset-y-0 right-0 z-[1000] flex w-96 flex-col border-l border-edge bg-surface shadow-panel">
+    <div className="absolute inset-y-0 right-0 z-[1000] flex w-96 flex-col border-l border-edge bg-bg shadow-panel">
       <div className="flex items-center justify-between border-b border-edge px-4 py-3">
         <div>
           <p className="text-xs font-mono" style={{ color: s.color }}>{s.label.toUpperCase()}</p>
@@ -136,7 +136,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
           </dl>
           <button
             onClick={onViewInventory}
-            className="mt-3 w-full rounded-md border border-edge bg-bg px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-raised"
+            className="mt-3 w-full rounded-md border border-edge bg-surface px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface/90"
           >
             View Full Inventory
           </button>
@@ -158,7 +158,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
               {loading && <p className="text-sm text-mute">Building recommendation…</p>}
 
               {!loading && currentAction && (
-                <div className="rounded-lg border border-edge bg-bg p-3">
+                <div className="rounded-lg border border-edge bg-surface p-3">
                   <p className="text-sm text-ink">
                     Transfer <span className="font-mono text-action">{currentAction.units}</span> units of{' '}
                     <span className="font-medium">{currentAction.item}</span> from{' '}
@@ -200,7 +200,7 @@ export default function InterventionPanel({ hospital, onClose, onApplied, onView
                       className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
                         selectedDonorId === donor.donor_id
                           ? 'border-action bg-action/10'
-                          : 'border-edge bg-bg hover:bg-surface'
+                          : 'border-edge bg-surface hover:bg-surface/90'
                       } ${applied ? 'opacity-60 cursor-default' : ''}`}
                     >
                       <span className="text-ink font-medium">{donor.donor_name}</span>
