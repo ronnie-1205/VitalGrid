@@ -8,6 +8,21 @@ echo   VitalGrid Command Center - Windows Startup
 echo ===================================================
 echo.
 
+cd /d "%PROJECT_ROOT%"
+
+if not exist "venv\" (
+    echo [!] No virtual environment found. Creating one...
+    python -m venv venv
+    
+    echo [!] Activating venv and installing Python dependencies...
+    call venv\Scripts\activate.bat
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    echo.
+) else (
+    call venv\Scripts\activate.bat
+)
+
 echo [1/4] Generating synthetic data and seeding database...
 cd /d "%PROJECT_ROOT%backend"
 python generate_data.py

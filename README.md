@@ -12,26 +12,13 @@ VitalGrid is designed to be completely universal. You can run it on any machine 
 - Node.js (v18+)
 - Python (3.9+)
 
-### 1. Create a Virtual Environment
-```bash
-# Using venv
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# OR using Conda
-conda create -n vitalgrid python=3.11
-conda activate vitalgrid
-```
-
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-
-# Note: The startup scripts will automatically install the Node.js frontend dependencies (npm install) on first boot.
-```
-
-### 3. Launch the Application
+### 1. Zero-Config Launch
+VitalGrid is designed with auto-bootstrapping scripts. Simply run the startup script for your OS, and it will automatically:
+- Create a Python virtual environment (`venv`)
+- Install all Python backend dependencies (`pip install`)
+- Install all Node.js frontend dependencies (`npm install`)
+- Generate synthetic data and seed the SQLite database
+- Launch both the frontend and backend servers
 
 **For Mac/Linux:**
 ```bash
