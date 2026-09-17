@@ -19,6 +19,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [activeDonorId, setActiveDonorId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Login
   const handleLogin = (userData) => {
@@ -40,21 +41,52 @@ export default function App() {
       });
   };
 
+  const [fadeSplash, setFadeSplash] = useState(false);
+
   useEffect(() => {
-    refreshNetworkData().finally(() => setLoading(false));
+    // Wait for BOTH the data to fetch AND a minimum of 2 seconds so the splash screen feels deliberate
+    Promise.all([
+      refreshNetworkData(),
+      new Promise(resolve => setTimeout(resolve, 2000))
+    ]).finally(() => {
+      setFadeSplash(true); // Trigger fade out
+      setTimeout(() => {
+        setShowSplash(false); // Unmount after fade finishes
+        setLoading(false);
+      }, 500);
+    });
   }, []);
 
   const selectedHospital =
     hospitals.find((h) => h.id === selectedId) || null;
 
-  // Show Login screen if user is not authenticated
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  // Main dashboard
+  // Render the main app, with the splash screen as a fading overlay on top
   return (
-    <div className="flex h-screen flex-col">
+    <>
+      {showSplash && (
+        <div className={`fixed inset-0 z-[2000] flex flex-col items-center justify-center bg-bg transition-opacity duration-500 ease-in-out ${fadeSplash ? 'opacity-0' : 'opacity-100'}`}>
+          <div className="flex flex-col items-center space-y-8 animate-[fade-in_1s_ease-out]">
+            <div className="flex flex-col items-center">
+              <h1 className="text-5xl font-black tracking-tighter text-ink drop-shadow-lg">
+                Vital<span className="text-action">Grid</span>
+              </h1>
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-mute">
+                Predictive Healthcare Logistics
+              </p>
+            </div>
+            
+            <div className="h-1 w-64 overflow-hidden rounded-full bg-surface">
+              <div className="h-full w-full bg-action animate-loading-bar"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Show Login screen if user is not authenticated, otherwise show dashboard */}
+      {!user ? (
+        <Login onLogin={handleLogin} />
+      ) : (
+        <div className="flex h-screen flex-col">
       <Header
         hospitals={hospitals}
         screen={screen}
@@ -106,5 +138,7 @@ export default function App() {
       {screen === 'simulator' && <CascadeSimulator />}
       {screen === 'inventory' && <InventoryPage hospital={selectedHospital} onClose={() => setScreen('command')} />}
     </div>
+    )}
+    </>
   );
 }

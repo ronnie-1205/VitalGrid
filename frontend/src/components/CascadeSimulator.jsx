@@ -15,6 +15,15 @@ export default function CascadeSimulator() {
   const [autoIntervene, setAutoIntervene] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [selectedId, setSelectedId] = useState(null)
+  
+  const [showGuide, setShowGuide] = useState(() => {
+    return sessionStorage.getItem('cascadeGuideSeen') !== 'true';
+  })
+
+  const dismissGuide = () => {
+    sessionStorage.setItem('cascadeGuideSeen', 'true');
+    setShowGuide(false);
+  }
 
   useEffect(() => {
     let timer;
@@ -71,6 +80,62 @@ export default function CascadeSimulator() {
 
   return (
     <div className="relative flex-1">
+      {showGuide && (
+        <div className="absolute inset-0 z-[1100] flex items-center justify-center bg-bg/80 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-2xl border border-edge bg-surface p-8 shadow-2xl">
+            <h2 className="mb-2 text-2xl font-bold text-ink">Welcome to the Cascade Simulator</h2>
+            <p className="mb-6 text-sm text-mute">
+              This engine projects the next 30 days of supply chain health. It simulates physical logistics, 
+              stochastic demand, patient spillovers, and automated AI interventions in real-time.
+            </p>
+            
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-ink border-b border-edge pb-2">Hospital Status</h3>
+                <div className="flex items-center gap-3">
+                  <div className="h-3 w-3 rounded-full bg-success shadow-[0_0_8px_var(--color-success)]"></div>
+                  <span className="text-sm text-ink"><strong className="text-success">Safe:</strong> &gt;7 days of stock</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-3 w-3 rounded-full bg-warning shadow-[0_0_8px_var(--color-warning)]"></div>
+                  <span className="text-sm text-ink"><strong className="text-warning">At Risk:</strong> 4-7 days of stock</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-3 w-3 rounded-full bg-critical shadow-[0_0_8px_var(--color-critical)]"></div>
+                  <span className="text-sm text-ink"><strong className="text-critical">Critical:</strong> 0-3 days of stock</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-semibold text-ink border-b border-edge pb-2">Live Telemetry</h3>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1.5 h-1 w-8 border-b-2 border-dashed border-critical"></div>
+                  <div className="text-sm text-ink">
+                    <strong className="text-critical">Patient Spillover</strong>
+                    <p className="text-xs text-mute mt-0.5">When a hospital hits 0 stock, untreated patients physically overflow to the nearest surviving hospital.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1.5 h-1 w-8 border-b-2 border-dashed border-action"></div>
+                  <div className="text-sm text-ink">
+                    <strong className="text-action">Smart Routing</strong>
+                    <p className="text-xs text-mute mt-0.5">If Auto-Intervene is enabled, AI dynamically transfers 14-day supply packages from surplus hospitals to failing ones.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button 
+                onClick={dismissGuide}
+                className="rounded-lg bg-action px-8 py-2.5 text-sm font-semibold text-bg transition-all hover:bg-action/90"
+              >
+                I understand, let's start
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {loading && (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-bg/80">
           <p className="font-mono text-sm text-mute">Running 30-day stochastic projection…</p>
