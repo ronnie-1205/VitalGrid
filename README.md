@@ -6,31 +6,76 @@ A comprehensive simulation and management dashboard for healthcare supply chains
 
 ## 🚀 Installation & Setup
 
-VitalGrid is designed to be completely universal. You can run it on any machine using either a standard Python virtual environment (`venv`) or `conda`. 
+VitalGrid requires both a Python backend and a Node.js frontend. Follow these steps to manually set up and run the project from scratch on any operating system.
 
 ### Prerequisites
-- Node.js (v18+)
-- Python (3.9+)
 
-### 1. Zero-Config Launch
-VitalGrid is designed with auto-bootstrapping scripts. Simply run the startup script for your OS, and it will automatically:
-- Create a Python virtual environment (`venv`)
-- Install all Python backend dependencies (`pip install`)
-- Install all Node.js frontend dependencies (`npm install`)
-- Generate synthetic data and seed the SQLite database
-- Launch both the frontend and backend servers
+You will need to install the following software on your machine:
+1. **Python (3.9+)**: Download and install from [python.org](https://www.python.org/downloads/). Ensure you check the box to "Add Python to PATH" during installation if you are on Windows.
+2. **Node.js (v18+)**: Download and install from [nodejs.org](https://nodejs.org/). This will also install `npm`, which is required for the frontend.
 
-**For Mac/Linux:**
+---
+
+### Step 1: Set up the Python Backend
+
+Open a terminal or command prompt in the `VitalGrid` project directory.
+
+**1. Create a Virtual Environment**
+Isolate your Python dependencies by creating a virtual environment:
 ```bash
-./start.sh
-```
-*Note: The script will automatically generate synthetic data, seed the SQLite database, boot the FastAPI backend on port `8001`, install frontend npm modules, and launch the React frontend on port `5173`. Do not close the terminal.*
+# Windows
+python -m venv venv
 
-**For Windows:**
-```cmd
-start.bat
+# Linux/Mac
+python3 -m venv venv
 ```
-*Note: The batch script will automatically open two new console windows for the frontend and backend servers. To shut down the application, simply close those two windows.*
+
+**2. Activate the Virtual Environment**
+You must activate the virtual environment every time you want to run the backend:
+```bash
+# Windows
+venv\Scripts\activate
+
+# Linux/Mac
+source venv/bin/activate
+```
+
+**3. Install Dependencies**
+With the virtual environment activated, install the required Python packages:
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**4. Generate Data and Start the Server**
+Navigate to the backend directory, generate the synthetic data, seed the database, and boot the API server:
+```bash
+cd backend
+python generate_data.py
+python seed_db.py
+python -m uvicorn main:app --reload --port 8001
+```
+Leave this terminal window open. The backend is now running at `http://127.0.0.1:8001`.
+
+---
+
+### Step 2: Set up the React Frontend
+
+Open a **second, separate terminal window** in the `VitalGrid` project directory.
+
+**1. Install Node Dependencies**
+Navigate to the frontend directory and install the required npm packages:
+```bash
+cd frontend
+npm install
+```
+
+**2. Start the Development Server**
+Launch the React frontend:
+```bash
+npm run dev
+```
+Leave this terminal window open. The frontend will boot up, and you can now access the VitalGrid Command Center in your browser at `http://127.0.0.1:5173`.
 
 ---
 
